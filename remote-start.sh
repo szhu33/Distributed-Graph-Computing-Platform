@@ -1,0 +1,1 @@
+bash-scripts/remote-start-all.sh

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
-	"net/rpc"
 	"os"
 	"strconv"
 	"strings"
@@ -17,9 +15,9 @@ const (
 )
 
 var (
-	myID        int
-	rpcRequest  service.rpcRequest
-	rpcResponse service.rpcResponse
+	myID            int
+	clientID        int
+	standbyMasterID int
 )
 
 // TODO:change to util!
@@ -62,28 +60,5 @@ func main() {
 			fmt.Println("unable to open the file, please enter correct command\n")
 			continue
 		}
-
-		// build Request
-		rpcRequest.ClientID = myID
-		rpcRequest.Application = app
-		rpcRequest.Dataset = dataset
-
-		// rpc clent
-		conn, err := net.Dial("tcp", "localhost"+clientPort)
-		if err != nil {
-			fmt.Println("cannot connect the master, enter command and try again.")
-			continue
-		}
-		defer conn.Close()
-
-		var response service.Response
-		rpcClient := rpc.NewClient(conn)
-		err = rpcClient.Call("Service.ComputeGraph", rpcRequest, &rpcResponse)
-		if err != nil {
-			fmt.Println("fail to call rpc, try again!\n")
-			continue
-		}
-
-		fmt.Println(rpcResponse)
 	}
 }

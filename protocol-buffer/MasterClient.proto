@@ -1,0 +1,11 @@
+syntax = "proto3";
+package masterclient;
+
+message MasterClient {
+    uint32 clientID = 1; // sender ID
+    String application = 2;
+    []byte dataset = 3;
+
+    bool success = 4;
+    []byte result = 5;
+}

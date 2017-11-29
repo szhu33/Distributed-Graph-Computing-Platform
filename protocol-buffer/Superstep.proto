@@ -1,0 +1,15 @@
+syntax = "proto3";
+package superstep;
+
+message Superstep {
+    enum Command{
+      START = 0;
+      RESTART = 1;
+      ACK = 2;
+      VOTETOHALT = 3;
+    }
+
+    uint32 source = 1; // sender ID
+    Command command = 2;
+    int stepcount = 3;
+}

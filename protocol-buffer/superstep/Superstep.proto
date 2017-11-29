@@ -11,5 +11,5 @@ message Superstep {
 
     uint32 source = 1; // sender ID
     Command command = 2;
-    int stepcount = 3;
+    uint64 stepcount = 3;
 }

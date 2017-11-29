@@ -5,18 +5,24 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-  "cs425_mp4/rpc_service"
+	"cs425_mp4/protocol-buffer/superstep"
+	"cs425_mp4/protocol-buffer/master-client"
 )
 
 const (
 	clientPort = "1234"
+	START_BLAH = superstep.Superstep_START
+)
+
+type (
+	test = masterclient.MasterClient
 )
 
 var (
   workerNum := 7
   standbyMasterID := 9
-
 )
+
 
 // seng msg to standby master
 

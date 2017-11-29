@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	clientPort = "1234"
+	clientPort = ":1234"
 	workerPort = "5558"
 	nodeName   = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
 	START      = superstep.Superstep_START
@@ -35,6 +35,8 @@ var (
 	workerRes       chan superstep.Superstep
 	failure         chan int
 	clientRequest   masterclient.MasterClient
+	app             string
+	finalRes        []byte
 )
 
 /* failre handling function */
@@ -74,6 +76,24 @@ func listenClient() {
 }
 
 func sendClientRes() {
+	msg := &masterclient.MasterClient{ClientID: uint32(clientID)}
+	msg.Application = app
+	msg.Result = finalRes
+
+	pb, err := proto.Marshal(msg)
+	if err != nil {
+		fmt.Println("error occured!")
+		return
+	}
+
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, clientID, clientPort))
+	//conn, err := net.Dial("tcp", "localhost"+clientPort)
+	if err != nil {
+		fmt.Printf("error has occured! %s\n", err)
+		return
+	}
+	defer conn.Close()
+	conn.Write(pb)
 
 }
 
@@ -90,7 +110,7 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 		return
 	}
 
-	conn, err := net.Dial("tdp", fmt.Sprintf(nodeName, destID, workerPort))
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID, workerPort))
 	if err != nil {
 		fmt.Printf("error has occured! %s\n", err)
 		return
@@ -195,9 +215,14 @@ COMPUTE:
 }
 
 func main() {
-	listenClient()
-	// TODO : upload dataset to sdfs
-	uploadDataToSDFS()
-	startComputeGraph()
-	sendClientRes()
+	for {
+		listenClient()
+		app = clientRequest.GetApplication()
+
+		// TODO : upload dataset to sdfs
+		uploadDataToSDFS()
+		//startComputeGraph()
+		finalRes = []byte("yes")
+		sendClientRes()
+	}
 }

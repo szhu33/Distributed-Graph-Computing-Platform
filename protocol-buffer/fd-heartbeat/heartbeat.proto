@@ -1,0 +1,28 @@
+syntax = "proto3";
+package heartbeat;
+
+import "google/protobuf/timestamp.proto";
+// https://developers.google.com/protocol-buffers/docs/style
+// Use CamelCase (with an initial capital) for message names – for example, SongServerRequest.
+// Use underscore_separated_names for field names – for example, song_name.
+
+message Member {
+
+    enum Status {
+        START = 0;
+        CRASH = 1;
+        ALIVE = 2;
+        LEAVE = 3;
+    }
+
+    uint32 id = 1;
+    uint64 heartbeat_count = 2;
+    Status status = 3;
+    uint32 ip_addr = 4;
+    google.protobuf.Timestamp last_join = 5;
+}
+
+message MembershipList {
+    uint32 source = 1;
+    repeated Member members = 2;
+}

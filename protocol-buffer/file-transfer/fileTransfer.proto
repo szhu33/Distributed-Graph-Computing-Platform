@@ -1,0 +1,30 @@
+syntax = "proto3";
+package fileTransfer;
+
+import "google/protobuf/timestamp.proto";
+// https://developers.google.com/protocol-buffers/docs/style
+// Use CamelCase (with an initial capital) for message names – for example, SongServerRequest.
+// Use underscore_separated_names for field names – for example, song_name.
+
+message FileTransfer {
+    enum Command{
+      PUT = 0;
+      GET = 1;
+      DELETE = 2;
+      LS = 3;
+      BACKUP = 4;
+      REPAIR = 5;
+    }
+    uint32 source = 1; // sender ID
+    Command command = 2;
+    string sdfsFilename = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    bytes file = 5;
+    bool ack = 6;
+
+    // Master-related Variables
+    repeated uint32 nodes = 7;
+    bool writeConflict = 8;
+    bytes allMetadata = 9;
+    uint32 dest = 10;
+}

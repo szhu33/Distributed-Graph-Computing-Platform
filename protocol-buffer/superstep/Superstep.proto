@@ -12,5 +12,5 @@ message Superstep {
     uint32 source = 1; // sender ID
     Command command = 2;
     uint64 stepcount = 3;
-    String datasetFilename = 4;
+    string datasetFilename = 4;
 }

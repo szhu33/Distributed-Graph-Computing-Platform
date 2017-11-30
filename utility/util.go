@@ -56,7 +56,7 @@ func SendWithMarshal(port string, targetID int, msg *fileTransfer.FileTransfer) 
 }
 
 // HashFilenameToVMIdx return the hash value of input string
-func HashFilenameToVMIdx(filename string) uint32 {
+func HashToVMIdx(filename string) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(filename))
 	fmt.Printf("hash to : %d\n", h.Sum32()%10)

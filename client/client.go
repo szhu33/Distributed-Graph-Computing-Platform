@@ -1,14 +1,11 @@
 package main
 
 import (
+	"cs425_mp4/protocol-buffer/master-client"
+	"cs425_mp4/utility"
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
-	"strconv"
-	"strings"
-
-	"cs425_mp4/protocol-buffer/master-client"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -28,30 +25,8 @@ var (
 	output          masterclient.MasterClient
 )
 
-// TODO:change to util!
-func getIDFromHostname() int {
-	hostname, err := os.Hostname()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("hostname:", hostname)
-	list := strings.SplitN(hostname, ".", 2)
-	if len(list) > 0 {
-		tempStr := list[0]
-		id, err := strconv.Atoi(tempStr[len(tempStr)-2:])
-		if err != nil {
-			// If not in the format of "fa17-cs425-g28-%02d.cs.illinois.edu"
-			// just return 0 (to allow running in local developement)
-			return 0
-		}
-		return id - 1
-	}
-	panic("No valid hostname!")
-}
-
 func main() {
-	myID = getIDFromHostname()
+	myID = util.GetIDFromHostname()
 	var app, data string
 
 	for {

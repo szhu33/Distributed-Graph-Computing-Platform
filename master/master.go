@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/protocol-buffer/superstep"
+	"cs425_mp4/utility"
 	"fmt"
 	"io"
 	"net"
@@ -220,6 +221,7 @@ COMPUTE:
 }
 
 func main() {
+	myID = util.GetIDFromHostname()
 	for {
 		listenClient()
 		app = clientRequest.GetApplication()

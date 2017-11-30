@@ -164,7 +164,7 @@ func putClient(localFilename string, sdfsFilename string) {
 	}
 	myMsg.Timestamp = msgTime
 
-	targetIdx := util.HashFilenameToVMIdx(sdfsFilename)
+	targetIdx := util.HashToVMIdx(sdfsFilename)
 	for i := 0; i < replicaNum; i++ {
 		for !sMembershipList[targetIdx] {
 			targetIdx++
@@ -834,7 +834,7 @@ func sendRepairMsg(old [nodeNum]bool, new [nodeNum]bool) {
 		printMasterTable(masterTable, masterID)
 		for filename, oldNodes := range masterTable {
 			var newNodes [replicaNum]uint32
-			targetIdx := util.HashFilenameToVMIdx(filename)
+			targetIdx := util.HashToVMIdx(filename)
 
 			for i := 0; i < replicaNum; i++ {
 				for !sMembershipList[targetIdx] {
@@ -957,7 +957,7 @@ func masterHandleAck(ackMsg *fileTransfer.FileTransfer) {
 		if info.Nodes.Len() > 3 {
 			var valid map[int]bool
 			valid = make(map[int]bool)
-			targetIdx := util.HashFilenameToVMIdx(f)
+			targetIdx := util.HashToVMIdx(f)
 			for i := 0; i < replicaNum; i++ {
 				for !sMembershipList[targetIdx] {
 					targetIdx++

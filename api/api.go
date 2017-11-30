@@ -1,4 +1,4 @@
-package sava
+package api
 
 type VertexValue interface{}
 type EdgeValue interface{}

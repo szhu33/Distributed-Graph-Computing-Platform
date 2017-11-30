@@ -4,7 +4,7 @@ package superstep;
 message Superstep {
     enum Command{
       START = 0;
-      RESTART = 1;
+      RUN = 1;
       ACK = 2;
       VOTETOHALT = 3;
     }

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/protocol-buffer/superstep"
 	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -11,13 +13,14 @@ import (
 )
 
 const (
-	clientPort = ":1234"
-	workerPort = "5558"
-	nodeName   = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
-	START      = superstep.Superstep_START
-	RESTART    = superstep.Superstep_RESTART
-	ACK        = superstep.Superstep_ACK
-	VOTETOHALT = superstep.Superstep_VOTETOHALT
+	clientPort       = ":1234"
+	masterworkerPort = "5558"
+	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
+	START            = superstep.Superstep_START
+	RUN              = superstep.Superstep_RUN
+	ACK              = superstep.Superstep_ACK
+	VOTETOHALT       = superstep.Superstep_VOTETOHALT
+	datasetName      = "input.txt"
 )
 
 type (
@@ -57,7 +60,7 @@ func listenClient() {
 	}
 	defer ln.Close()
 
-	buf := make([]byte, 1024*1024) //TODO:how to flexbling change the buf size
+	var buf bytes.Buffer
 
 	conn, err := ln.Accept()
 	if err != nil {
@@ -66,13 +69,13 @@ func listenClient() {
 	}
 	defer conn.Close()
 
-	_, err = conn.Read(buf)
+	_, err = io.Copy(&buf, conn)
 	if err != nil {
 		fmt.Println("error occured!")
 		return
 	}
 
-	proto.Unmarshal(buf, &clientRequest)
+	proto.Unmarshal(buf.Bytes(), &clientRequest)
 }
 
 func sendClientRes() {
@@ -103,14 +106,16 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 	msg := &superstep.Superstep{Source: uint32(myID)}
 	msg.Command = command
 	msg.Stepcount = uint64(stepcount)
-
+	if command == START {
+		msg.DatasetFilename = datasetName
+	}
 	pb, err := proto.Marshal(msg)
 	if err != nil {
 		fmt.Println("error occured!")
 		return
 	}
 
-	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID, workerPort))
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID, masterworkerPort))
 	if err != nil {
 		fmt.Printf("error has occured! %s\n", err)
 		return
@@ -136,7 +141,7 @@ func allVoteToHalt() bool {
 }
 
 func listenWorker() {
-	ln, err := net.Listen("tcp", workerPort)
+	ln, err := net.Listen("tcp", masterworkerPort)
 	if err != nil {
 		fmt.Println("cannot listen on port")
 		return
@@ -180,7 +185,7 @@ func startComputeGraph() {
 COMPUTE:
 	for !allVoteToHalt() {
 		for key, _ := range workerInfos {
-			go sendMsgToWorker(key, START)
+			go sendMsgToWorker(key, RUN)
 			sendCount++
 		}
 
@@ -199,7 +204,7 @@ COMPUTE:
 						// restart
 						initialize()
 						for key, _ := range workerInfos {
-							go sendMsgToWorker(key, RESTART)
+							go sendMsgToWorker(key, START)
 						}
 						time.Sleep(1)
 						continue COMPUTE

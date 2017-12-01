@@ -299,7 +299,7 @@ func updateMembershipLists(newHeartbeat *heartbeat.MembershipList) {
 		if neighborList[i].kind != invalidEntry {
 			neighborID := neighborList[i].nodeID
 			if membershipList[neighborID].Status == alive {
-				if time.Now().After(myTimestamps[neighborID].localTime.Add(1950 * time.Millisecond)) {
+				if time.Now().After(myTimestamps[neighborID].localTime.Add(5 * time.Second)) {
 					membershipList[neighborID].Status = crash
 					myLog.Printf("Node %d crashed (by detection).\n", neighborID)
 				}

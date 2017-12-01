@@ -100,7 +100,6 @@ func main() {
 
 /* put command */
 func putClient(localFilename string, sdfsFilename string) {
-
 	insertTime = time.Now()
 	defer func() { isPutting = false }()
 	// open local file
@@ -181,11 +180,17 @@ func putClient(localFilename string, sdfsFilename string) {
 
 	// wait for quorum ack
 	ackNum := 0
+	timer := time.NewTimer(10 * time.Second)
 
 	for ackNum < quorum {
-		newACK := <-ackPutChan
-		if newACK.GetSdfsFilename() == sdfsFilename {
-			ackNum++
+		select {
+		case <-timer.C:
+			fmt.Println("Did not get enough ACKs before timeout.")
+			return
+		case newACK := <-ackPutChan:
+			if newACK.GetSdfsFilename() == sdfsFilename {
+				ackNum++
+			}
 		}
 	}
 	// finish
@@ -343,7 +348,7 @@ GET_WAIT:
 			fmt.Println("send read repair query!")
 		}
 	}
-	fmt.Println("Read time:", time.Since(time.Now()))
+	fmt.Println("Read time:", time.Since(readTime))
 	fmt.Println("read repairment done!")
 }
 
@@ -486,7 +491,7 @@ func listMySdfsFile() {
 }
 
 /* ls command */
-func lsClient() {
+func lsClient(flag bool, filename string) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", listenPortLS)
 	if err != nil {
 		println("ResolveTCPAddr failed:", err.Error())
@@ -526,7 +531,16 @@ func lsClient() {
 	if err != nil {
 		log.Fatal("decode error 1:", err)
 	}
-	printMasterTable(newMT, masterID)
+	if !flag {
+		printMasterTable(newMT, masterID)
+	} else {
+		fmt.Printf("%s\t\t", filename)
+		replicaNodes := masterReturnTargets(filename, newMT)
+		for _, node := range replicaNodes {
+			fmt.Printf("%d ", node+1)
+		}
+		fmt.Println()
+	}
 }
 
 /* client ask */
@@ -583,7 +597,7 @@ func intialize() {
 }
 
 func updateSMembershipList() {
-	ticker := time.NewTicker(1000 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	for _ = range ticker.C {
 		oldSML = sMembershipList
 		sMembershipList = fd.MemberStatus()
@@ -600,24 +614,19 @@ func handleUserInput() {
 		switch command {
 		case "put":
 			isPutting = true
-			fmt.Println(command)
-			fmt.Println(filename1)
-			fmt.Println(filename2)
 			go putClient(filename1, filename2)
 		case "get":
 			isPutting = false
-			fmt.Println(command)
-			fmt.Println(filename1)
-			fmt.Println(filename2)
 			go getClient(filename1, filename2)
 		case "delete":
 			isPutting = false
-			fmt.Println(command)
-			fmt.Println(filename1)
 			go deleteClient(filename1)
 		case "ls":
 			isPutting = false
-			go lsClient()
+			go lsClient(true, filename1)
+		case "lsall":
+			isPutting = false
+			go lsClient(false, filename1)
 		case "store":
 			isPutting = false
 			listMySdfsFile()
@@ -782,7 +791,7 @@ func initMaster() {
 
 // Send out repair msgs
 func updateMasterStatus() {
-	ticker := time.NewTicker(499 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	for _ = range ticker.C {
 
 		if isMaster {
@@ -800,14 +809,14 @@ func updateMasterStatus() {
 		}
 
 		// Check if node itself is master or not
-		oldIsMaster := isMaster
+		// oldIsMaster := isMaster
 		isMaster, isMasterBackup = checkIsMaster(myID, sMembershipList, &masterID)
-		if oldIsMaster == true && isMaster == false {
-			err := sendBackupMsg(masterPort, masterID)
-			for err != nil {
-				err = sendBackupMsg(masterPort, masterID)
-			}
-		}
+		// if oldIsMaster == true && isMaster == false {
+		// 	err := sendBackupMsg(masterPort, masterID)
+		// 	for err != nil {
+		// 		err = sendBackupMsg(masterPort, masterID)
+		// 	}
+		// }
 	}
 }
 
@@ -859,22 +868,24 @@ func sendRepairMsg(old [nodeNum]bool, new [nodeNum]bool) {
 					}
 				}
 			}
-			fmt.Println("Nodes to repair:", toRepair)
-			for _, value := range toRepair {
-				if reReplication.IsZero() {
-					reReplication = time.Now()
+			if len(toRepair) > 0 && best != -1 {
+				fmt.Println("Nodes to repair:", toRepair)
+				for _, value := range toRepair {
+					if reReplication.IsZero() {
+						reReplication = time.Now()
+					}
+					repairMsg := &fileTransfer.FileTransfer{}
+					repairMsg.Source = uint32(myID)
+					repairMsg.Command = REPAIR
+					repairMsg.SdfsFilename = filename
+					repairMsg.Dest = uint32(value)
+					ts, err := ptypes.TimestampProto(oldNodes.Nodes.GetTimestamp(best))
+					if err != nil {
+						fmt.Println("Error when converting time.", err.Error())
+					}
+					repairMsg.Timestamp = ts
+					util.SendWithMarshal(queryPort, best, repairMsg)
 				}
-				repairMsg := &fileTransfer.FileTransfer{}
-				repairMsg.Source = uint32(myID)
-				repairMsg.Command = REPAIR
-				repairMsg.SdfsFilename = filename
-				repairMsg.Dest = uint32(value)
-				ts, err := ptypes.TimestampProto(oldNodes.Nodes.GetTimestamp(best))
-				if err != nil {
-					fmt.Println("Error when converting time.", err.Error())
-				}
-				repairMsg.Timestamp = ts
-				util.SendWithMarshal(queryPort, best, repairMsg)
 			}
 		}
 	}
@@ -977,6 +988,11 @@ func masterHandleAck(ackMsg *fileTransfer.FileTransfer) {
 			}
 			for _, extraNode := range extra {
 				info.Nodes.Remove(extraNode)
+				dMsg := &fileTransfer.FileTransfer{}
+				dMsg.Source = uint32(myID)
+				dMsg.SdfsFilename = f
+				dMsg.Command = DELETE
+				util.SendWithMarshal(queryPort, extraNode, dMsg)
 			}
 		}
 
@@ -1108,7 +1124,7 @@ func backupServer() {
 		if err != nil {
 			continue
 		}
-		if newMsg.GetCommand() == BACKUP && int(newMsg.GetSource()) != myID {
+		if newMsg.GetCommand() == BACKUP && int(newMsg.GetSource()) > myID {
 			masterHandleCmdBACKUP(newMsg)
 		}
 	}

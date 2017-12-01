@@ -98,12 +98,11 @@ func updateVertex() {
 			dummyToInt++
 			toVm = int(util.HashToVMIdx(string(dummyToInt)))
 		}
-		fmt.Printf("fromvertex:%d, tovertex:%d, fromVm:%d, toVm:%d\n", from, to, fromVm, toVm)
+		// fmt.Printf("fromvertex:%d, tovertex:%d, fromVm:%d, toVm:%d\n", from, to, fromVm, toVm)
 		if (fromVm != myID) && (toVm != myID) {
 			continue
 		}
 		if fromVm == myID {
-			fmt.Println("from!")
 			if _, ok := vertex[from]; ok {
 				tempInfo := vertex[from]
 				tempInfo.neighbors = append(tempInfo.neighbors, to)
@@ -114,11 +113,10 @@ func updateVertex() {
 				vertex[from] = vertexInfo{active: true, neighbors: nei}
 			}
 		} else {
-			fmt.Println("to!")
 			if _, ok := vertex[to]; ok {
-				tempInfo := vertex[from]
-				tempInfo.neighbors = append(tempInfo.neighbors, to)
-				vertex[from] = tempInfo
+				tempInfo := vertex[to]
+				tempInfo.neighbors = append(tempInfo.neighbors, from)
+				vertex[to] = tempInfo
 			} else {
 				nei := make([]int, 0)
 				nei = append(nei, from)

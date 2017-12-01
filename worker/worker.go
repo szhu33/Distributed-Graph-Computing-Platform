@@ -39,8 +39,7 @@ var (
 	stepcount       int
 	myID            int
 	masterID        uint32
-	masterNext      chan superstep.Superstep
-	masterStart     chan superstep.Superstep
+	masterChan      chan superstep.Superstep
 	masterMsg       superstep.Superstep
 	workerIDs       []int //should range from 0-9
 	datasetFilename string
@@ -140,6 +139,10 @@ func initialize() {
 }
 
 /* worker related function */
+func computeAllVertex() {
+
+	mMsg := <-masterChan
+}
 
 /* master related function */
 func listenMaster() {
@@ -175,6 +178,7 @@ func listenMaster() {
 		if masterMsg.GetCommand() == START {
 			go initialize()
 		}
+		masterChan <- masterMsg
 	}
 }
 

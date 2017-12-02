@@ -195,7 +195,7 @@ func listenMaster() {
 
 func main() {
 	//TODO: get myid from hostname
-	sdfs.Start()
+	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	vertex = make(map[int]vertexInfo)
 	go listenMaster()

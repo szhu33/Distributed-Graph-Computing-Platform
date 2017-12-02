@@ -144,6 +144,7 @@ func updateVertex() {
 
 func initialize() {
 	stepcount = 0
+	<-masterChan
 	updateWorkerIDs()
 	// TODO: get file from sdfs and put vertex into map
 	//dataset = mp3.GetFile(datasetFilename)

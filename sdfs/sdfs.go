@@ -99,6 +99,55 @@ func main() {
 }
 
 /* put command */
+// graph computing master put
+func PutSendAndWaitACK(buf []byte, sdfsFilename string, timestamp time.Time) bool {
+	// generate msg, hash, build tcp connection and write
+	myMsg := &fileTransfer.FileTransfer{} //membership
+	myMsg.Source = uint32(myID)
+	myMsg.SdfsFilename = sdfsFilename
+	myMsg.Command = PUT
+	myMsg.File = buf
+	msgTime, err := ptypes.TimestampProto(timestamp)
+	if err != nil {
+		fmt.Println("Error parsing time.", err.Error())
+		return false
+	}
+	myMsg.Timestamp = msgTime
+
+	targetIdx := util.HashToVMIdx(sdfsFilename)
+	for i := 0; i < replicaNum; i++ {
+		for !sMembershipList[targetIdx] {
+			targetIdx++
+			targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
+		}
+		fmt.Printf("targetIdx: %d\n", targetIdx+1)
+		err := util.SendWithMarshal(filePort, int(targetIdx), myMsg)
+		if err != nil {
+			continue
+		}
+		targetIdx++
+		targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
+	}
+
+	// wait for quorum ack
+	ackNum := 0
+	timer := time.NewTimer(10 * time.Second)
+
+	for ackNum < quorum {
+		select {
+		case <-timer.C:
+			fmt.Println("Did not get enough ACKs before timeout.")
+			return false
+		case newACK := <-ackPutChan:
+			if newACK.GetSdfsFilename() == sdfsFilename {
+				ackNum++
+			}
+		}
+	}
+	return true
+}
+
+// file system put
 func putClient(localFilename string, sdfsFilename string) {
 	insertTime = time.Now()
 	defer func() { isPutting = false }()
@@ -149,54 +198,13 @@ func putClient(localFilename string, sdfsFilename string) {
 			}
 		}
 	}
-
-	// generate msg, hash, build tcp connection and write
-	myMsg := &fileTransfer.FileTransfer{} //membership
-	myMsg.Source = uint32(myID)
-	myMsg.SdfsFilename = sdfsFilename
-	myMsg.Command = PUT
-	myMsg.File = buf
-	msgTime, err := ptypes.TimestampProto(currentTime)
-	if err != nil {
-		fmt.Println("Error parsing time.", err.Error())
-		return
-	}
-	myMsg.Timestamp = msgTime
-
-	targetIdx := util.HashToVMIdx(sdfsFilename)
-	for i := 0; i < replicaNum; i++ {
-		for !sMembershipList[targetIdx] {
-			targetIdx++
-			targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
-		}
-		fmt.Printf("targetIdx: %d\n", targetIdx+1)
-		err := util.SendWithMarshal(filePort, int(targetIdx), myMsg)
-		if err != nil {
-			continue
-		}
-		targetIdx++
-		targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
-	}
-
-	// wait for quorum ack
-	ackNum := 0
-	timer := time.NewTimer(10 * time.Second)
-
-	for ackNum < quorum {
-		select {
-		case <-timer.C:
-			fmt.Println("Did not get enough ACKs before timeout.")
-			return
-		case newACK := <-ackPutChan:
-			if newACK.GetSdfsFilename() == sdfsFilename {
-				ackNum++
-			}
-		}
-	}
+	success := PutSendAndWaitACK(buf, sdfsFilename, currentTime)
 	// finish
-	fmt.Println("Insert time:", time.Since(insertTime))
-	fmt.Println("Successfully put the file into SDFS.")
-	myLog.Printf("Successfully put the local file %s as sdfs file %s", localFilename, sdfsFilename)
+	if success {
+		fmt.Println("Insert time:", time.Since(insertTime))
+		fmt.Println("Successfully put the file into SDFS.")
+		myLog.Printf("Successfully put the local file %s as sdfs file %s", localFilename, sdfsFilename)
+	}
 }
 
 func putServer(newFile *fileTransfer.FileTransfer) {

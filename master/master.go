@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/protocol-buffer/superstep"
+	"cs425_mp4/sdfs"
 	"cs425_mp4/utility"
 	"fmt"
 	"io"
@@ -49,7 +50,7 @@ var (
 
 // upload dataset into sdfs TODO: implement this function
 func uploadDataToSDFS() bool {
-	return true
+	return sdfs.PutSendAndWaitACK(clientRequest.GetDataset(), datasetName, time.Now())
 }
 
 /* client related function */

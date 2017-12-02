@@ -24,6 +24,7 @@ const (
 	RUN              = superstep.Superstep_RUN
 	ACK              = superstep.Superstep_ACK
 	VOTETOHALT       = superstep.Superstep_VOTETOHALT
+	localInputName   = "localFile.txt"
 )
 
 type vertexInfo struct {

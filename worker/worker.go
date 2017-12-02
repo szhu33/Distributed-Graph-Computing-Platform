@@ -162,14 +162,14 @@ func computeAllVertex() {
 
 /* master related function */
 func listenMaster() {
-	for {
-		ln, err := net.Listen("tcp", masterworkerPort)
-		if err != nil {
-			fmt.Println("cannot listen on port")
-			return
-		}
-		defer ln.Close()
+	ln, err := net.Listen("tcp", masterworkerPort)
+	if err != nil {
+		fmt.Println("cannot listen on port", masterworkerPort, err.Error())
+		return
+	}
+	defer ln.Close()
 
+	for {
 		var buf bytes.Buffer
 
 		conn, err := ln.Accept()

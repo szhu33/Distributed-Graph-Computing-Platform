@@ -234,7 +234,11 @@ func startComputeGraph() {
 COMPUTE:
 	for !allVoteToHalt() {
 		for key := range workerInfos {
-			go sendMsgToWorker(key, RUN)
+			cmd := RUN
+			if stepcount == 0 {
+				cmd = START
+			}
+			go sendMsgToWorker(key, cmd)
 			sendCount++
 		}
 

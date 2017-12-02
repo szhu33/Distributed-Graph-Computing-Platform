@@ -101,6 +101,7 @@ func Start() {
 /* put command */
 // graph computing master put
 func PutSendAndWaitACK(buf []byte, sdfsFilename string, timestamp time.Time) bool {
+	fmt.Println("enter mp3 function")
 	// generate msg, hash, build tcp connection and write
 	myMsg := &fileTransfer.FileTransfer{} //membership
 	myMsg.Source = uint32(myID)

@@ -50,6 +50,7 @@ var (
 
 // upload dataset into sdfs TODO: implement this function
 func uploadDataToSDFS() bool {
+	fmt.Println("start uploading to sdfs")
 	return sdfs.PutSendAndWaitACK(clientRequest.GetDataset(), datasetName, time.Now())
 }
 
@@ -229,10 +230,12 @@ func main() {
 	for {
 		listenClient()
 		app = clientRequest.GetApplication()
-
+		fmt.Println("data is below:")
+		fmt.Println(string(clientRequest.GetDataset()))
 		// TODO : upload dataset to sdfs
-		uploadDataToSDFS()
+		state := uploadDataToSDFS()
 		//startComputeGraph()
+		fmt.Printf("upload :%t", state)
 		finalRes = []byte("yes")
 		sendClientRes()
 	}

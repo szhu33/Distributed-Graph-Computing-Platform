@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"cs425_mp4/api"
 	fd "cs425_mp4/failure-detector"
 	ssproto "cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
@@ -32,11 +31,16 @@ const (
 )
 
 type vertexInfo struct {
-	active       bool
-	neighbors    []int
-	value        api.VertexValue
-	msgs         api.MessageValue
-	nextStepMsgs api.MessageValue
+	active    bool
+	neighbors []edgeT
+	value     float64
+	msgs      []float64
+	prevMsgs  []float64
+}
+
+type edgeT struct {
+	dest  int
+	value float64
 }
 
 var (
@@ -119,21 +123,21 @@ func updateVertex() {
 		if fromVm == myID {
 			if _, ok := vertex[from]; ok {
 				tempInfo := vertex[from]
-				tempInfo.neighbors = append(tempInfo.neighbors, to)
+				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
 				vertex[from] = tempInfo
 			} else {
-				nei := make([]int, 0)
-				nei = append(nei, to)
+				nei := make([]edgeT, 0)
+				nei = append(nei, edgeT{dest: to, value: 1})
 				vertex[from] = vertexInfo{active: true, neighbors: nei}
 			}
 		} else {
 			if _, ok := vertex[to]; ok {
 				tempInfo := vertex[to]
-				tempInfo.neighbors = append(tempInfo.neighbors, from)
+				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})
 				vertex[to] = tempInfo
 			} else {
-				nei := make([]int, 0)
-				nei = append(nei, from)
+				nei := make([]edgeT, 0)
+				nei = append(nei, edgeT{dest: from, value: 1})
 				vertex[to] = vertexInfo{active: true, neighbors: nei}
 			}
 		}
@@ -141,7 +145,7 @@ func updateVertex() {
 	fmt.Println("vertex result")
 	fmt.Println(len(vertex))
 	for key, val := range vertex {
-		fmt.Printf("key:%d, active:%t, neighbors:%d\n", key, val.active, val.neighbors)
+		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
 	}
 }
 

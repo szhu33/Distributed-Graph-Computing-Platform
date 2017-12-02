@@ -149,14 +149,6 @@ func initialize() {
 
 	datasetFilename = newMasterMsg.GetDatasetFilename()
 
-	if newMasterMsg.GetSource() != masterID {
-		masterID = newMasterMsg.GetSource()
-	}
-
-	if newMasterMsg.GetCommand() == START {
-		go initialize()
-	}
-
 	updateWorkerIDs()
 	dataset = sdfs.GetGraphInput(datasetFilename)
 	updateVertex()
@@ -194,6 +186,14 @@ func listenMaster() {
 
 		proto.Unmarshal(buf.Bytes(), &masterMsg)
 		masterChan <- masterMsg
+
+		if masterMsg.GetSource() != masterID {
+			masterID = masterMsg.GetSource()
+		}
+
+		if masterMsg.GetCommand() == START {
+			go initialize()
+		}
 	}
 }
 

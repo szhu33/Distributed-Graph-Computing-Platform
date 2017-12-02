@@ -62,24 +62,24 @@ func listenClient() {
 		return
 	}
 	defer ln.Close()
-	fmt.Printf("listening on port %d\n", clientPort)
+	fmt.Printf("listening on port %s\n", clientPort)
 	var buf bytes.Buffer
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
-		defer conn.Close()
 
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
-
-		proto.Unmarshal(buf.Bytes(), &clientRequest)
+	conn, err := ln.Accept()
+	if err != nil {
+		fmt.Println("error occured!")
+		return
 	}
+	defer conn.Close()
+
+	_, err = io.Copy(&buf, conn)
+	if err != nil {
+		fmt.Println("error occured!")
+		return
+	}
+
+	proto.Unmarshal(buf.Bytes(), &clientRequest)
+
 }
 
 func sendClientRes() {
@@ -188,7 +188,7 @@ func startComputeGraph() {
 
 COMPUTE:
 	for !allVoteToHalt() {
-		for key, _ := range workerInfos {
+		for key := range workerInfos {
 			go sendMsgToWorker(key, RUN)
 			sendCount++
 		}
@@ -207,7 +207,7 @@ COMPUTE:
 						fmt.Println("a worker failed, restart right now")
 						// restart
 						initialize()
-						for key, _ := range workerInfos {
+						for key := range workerInfos {
 							go sendMsgToWorker(key, START)
 						}
 						time.Sleep(1)

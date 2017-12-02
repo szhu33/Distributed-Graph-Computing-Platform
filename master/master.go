@@ -101,7 +101,7 @@ func listenClient() {
 
 	proto.Unmarshal(buf.Bytes(), &clientRequest)
 	clientID = int(clientRequest.GetClientID())
-	fmt.Print("unmarshal new meassge, client id: %d", clientRequest.GetClientID())
+	fmt.Printf("unmarshal new meassge, client id: %d\n", clientRequest.GetClientID())
 
 	// if not standby, need to send request to clientID to standbyMaster through clientPort
 	if !isStandBy {
@@ -177,6 +177,7 @@ func initialize() {
 	workerRes = make(chan superstep.Superstep)
 	workerInfos = make(map[uint32]superstep.Superstep_Command)
 	membersStatus := fd.MemberStatus()
+	fmt.Println(membersStatus)
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
 			continue

@@ -9,6 +9,7 @@ type MessageIterator interface {
 }
 
 type Vertex interface {
+
 	// Compute is defined by user application
 	Compute(msgs MessageIterator)
 

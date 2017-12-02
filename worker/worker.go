@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"cs425_mp4/api"
 	"cs425_mp4/failure-detector"
-	"cs425_mp4/protocol-buffer/superstep"
+	ssproto "cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
 	"cs425_mp4/utility"
 	"fmt"
@@ -22,10 +22,10 @@ const (
 	workerNum        = 7
 	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
-	START            = superstep.Superstep_START
-	RUN              = superstep.Superstep_RUN
-	ACK              = superstep.Superstep_ACK
-	VOTETOHALT       = superstep.Superstep_VOTETOHALT
+	START            = ssproto.Superstep_START
+	RUN              = ssproto.Superstep_RUN
+	ACK              = ssproto.Superstep_ACK
+	VOTETOHALT       = ssproto.Superstep_VOTETOHALT
 	localInputName   = "localFile.txt"
 )
 
@@ -42,8 +42,8 @@ var (
 	stepcount       int
 	myID            int
 	masterID        uint32
-	masterChan      chan superstep.Superstep
-	masterMsg       superstep.Superstep
+	masterChan      chan ssproto.Superstep
+	masterMsg       ssproto.Superstep
 	workerIDs       []int //should range from 0-9
 	datasetFilename string
 	dataset         []byte
@@ -144,10 +144,20 @@ func updateVertex() {
 
 func initialize() {
 	stepcount = 0
-	<-masterChan
+	newMasterMsg := <-masterChan
+
+	datasetFilename = newMasterMsg.GetDatasetFilename()
+
+	if newMasterMsg.GetSource() != masterID {
+		masterID = newMasterMsg.GetSource()
+	}
+
+	if newMasterMsg.GetCommand() == START {
+		go initialize()
+	}
+
 	updateWorkerIDs()
-	// TODO: get file from sdfs and put vertex into map
-	//dataset = mp3.GetFile(datasetFilename)
+	dataset = sdfs.GetGraphInput(datasetFilename)
 	updateVertex()
 }
 
@@ -182,14 +192,6 @@ func listenMaster() {
 		}
 
 		proto.Unmarshal(buf.Bytes(), &masterMsg)
-
-		if masterMsg.GetSource() != masterID {
-			masterID = masterMsg.GetSource()
-		}
-
-		if masterMsg.GetCommand() == START {
-			go initialize()
-		}
 		masterChan <- masterMsg
 	}
 }

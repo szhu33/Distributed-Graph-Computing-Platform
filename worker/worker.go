@@ -13,6 +13,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -209,6 +210,6 @@ func main() {
 	masterID = 9
 	initialize()
 	for {
-
+		time.Sleep(time.Second)
 	}
 }

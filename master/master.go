@@ -81,6 +81,7 @@ func listenClient() {
 	}
 
 	proto.Unmarshal(buf.Bytes(), &clientRequest)
+	clientID = int(clientRequest.GetClientID())
 	fmt.Print("unmarshal meassge, client id: %d", clientRequest.GetClientID())
 }
 
@@ -236,7 +237,7 @@ func main() {
 		// TODO : upload dataset to sdfs
 		state := uploadDataToSDFS()
 		//startComputeGraph()
-		fmt.Printf("upload :%t", state)
+		fmt.Println("upload :", state)
 		finalRes = []byte("yes")
 		sendClientRes()
 	}

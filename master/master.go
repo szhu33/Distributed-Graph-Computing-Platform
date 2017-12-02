@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	masterID         = 10
-	standbyID        = 9
+	masterID         = 9
+	standbyID        = 8
 	clientPort       = ":1234"
 	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
@@ -119,7 +119,7 @@ func listenClient() {
 			return
 		}
 
-		conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID, clientPort))
+		conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID+1, clientPort))
 		//conn, err := net.Dial("tcp", "localhost"+clientPort)
 		if err != nil {
 			fmt.Printf("error has occured! %s\n", err)
@@ -141,7 +141,7 @@ func sendClientRes() {
 		return
 	}
 
-	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, clientID, clientPort))
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, clientID+1, clientPort))
 	//conn, err := net.Dial("tcp", "localhost"+clientPort)
 	if err != nil {
 		fmt.Printf("error has occured! %s\n", err)
@@ -167,7 +167,7 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 		return
 	}
 
-	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID, masterworkerPort))
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID+1, masterworkerPort))
 	if err != nil {
 		fmt.Printf("error has occured! %s\n", err)
 		return
@@ -270,7 +270,7 @@ COMPUTE:
 func main() {
 	go sdfs.Start()
 	go detectFailure()
-	myID = util.GetIDFromHostname() + 1
+	myID = util.GetIDFromHostname()
 	if myID != masterID {
 		isStandBy = true
 	}

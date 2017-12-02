@@ -204,7 +204,7 @@ func main() {
 	vertex = make(map[int]vertexInfo)
 	go listenMaster()
 	// testing
-	masterID = 10
+	masterID = 9
 	initialize()
 	for {
 

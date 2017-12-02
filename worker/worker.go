@@ -61,8 +61,8 @@ func updateWorkerIDs() {
 		if aliveMembers[i] {
 			workerIDs[k] = i
 			k++
-			i++
 		}
+		i++
 	}
 }
 

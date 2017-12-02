@@ -18,6 +18,7 @@ import (
 const (
 	masterID         = 9
 	standbyID        = 8
+	standbyPort      = ":3366"
 	clientPort       = ":1234"
 	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
@@ -28,12 +29,17 @@ const (
 	datasetName      = "input.txt"
 )
 
+type workerStepState struct {
+	stepNum int
+	state   superstep.Superstep_Command
+}
+
 var (
 	systemHalt    bool // system state, need all workers vote to halt twice
 	workerNum     int
 	myID          int
 	clientID      int
-	workerInfos   map[uint32]superstep.Superstep_Command // key:vmID, value:value:ACK or vote to halt
+	workerInfos   map[uint32]workerStepState
 	stepcount     int
 	workerRes     chan superstep.Superstep
 	workerFailure chan int
@@ -42,6 +48,7 @@ var (
 	app           string
 	finalRes      []byte
 	isStandBy     bool
+	standbyCount  int
 )
 
 /* failre handling function */
@@ -66,11 +73,96 @@ func detectFailure() {
 		}
 		time.Sleep(5 * time.Second)
 	}
-
 }
 
-func standByUp() {
+func sendStandbyStepcount() {
+	msg := &superstep.Superstep{Source: uint32(myID)}
+	msg.Stepcount = uint64(stepcount)
 
+	pb, err := proto.Marshal(msg)
+	if err != nil {
+		fmt.Println("error occured!")
+		return
+	}
+
+	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID+1, standbyPort))
+	if err != nil {
+		fmt.Printf("error has occured! %s\n", err)
+		return
+	}
+	defer conn.Close()
+	conn.Write(pb)
+}
+
+func standbyReivStepcount() {
+	ln, err := net.Listen("tcp", standbyPort)
+	if err != nil {
+		fmt.Println("cannot listen on port")
+		return
+	}
+	defer ln.Close()
+	fmt.Printf("listening on port %s\n", clientPort)
+	buf := make([]byte, 256)
+
+	conn, err := ln.Accept()
+	if err != nil {
+		fmt.Println("error occured!")
+		return
+	}
+	defer conn.Close()
+
+	_, err = conn.Read(buf)
+	if err != nil {
+		fmt.Println("error occured!")
+		return
+	}
+
+	var newStepcount superstep.Superstep
+	proto.Unmarshal(buf, &newStepcount)
+	stepcount = int(newStepcount.GetStepcount())
+	standbyCount = workerNum
+	fmt.Printf("new meassge form master, stepcount: %d\n", stepcount)
+}
+
+func standbyWait() {
+	<-masterFailure
+	isStandBy = false
+	standbyUp()
+}
+func standbyUp() {
+	for standbyCount > 0 {
+		res := <-workerRes
+		{
+			standbyCount--
+			// update workerInfos
+			if res.GetStepcount() == uint64(stepcount) {
+				workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
+			}
+		}
+	}
+	sendCount := 0
+	for !allVoteToHalt() {
+		// send worker to run next step
+		for key := range workerInfos {
+			cmd := RUN
+			if stepcount == 0 {
+				cmd = START
+			}
+			go sendMsgToWorker(key, cmd)
+			sendCount++
+		}
+
+		for sendCount != 0 {
+			res := <-workerRes
+
+			sendCount--
+			// update workerInfos
+			if res.GetStepcount() == uint64(stepcount) {
+				workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
+			}
+		}
+	}
+	stepcount++
 }
 
 // upload dataset into sdfs TODO: implement this function
@@ -179,19 +271,19 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 func initialize() {
 	stepcount = 0
 	workerRes = make(chan superstep.Superstep)
-	workerInfos = make(map[uint32]superstep.Superstep_Command)
+	workerInfos = make(map[uint32]workerStepState)
 	membersStatus := fd.MemberStatus()
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
 			continue
 		}
-		workerInfos[uint32(i)] = ACK
+		workerInfos[uint32(i)] = workerStepState{stepNum: stepcount, state: ACK}
 	}
 }
 
 func allVoteToHalt() bool {
 	for _, value := range workerInfos {
-		if value != VOTETOHALT {
+		if value.state != VOTETOHALT {
 			return false
 		}
 	}
@@ -224,7 +316,14 @@ func listenWorker() {
 		}
 
 		proto.Unmarshal(buf, &pb)
-		workerRes <- pb
+		if !isStandBy {
+			workerRes <- pb
+		} else {
+			if int(pb.GetStepcount()) == stepcount {
+				standbyCount--
+			}
+		}
+
 	}
 }
 
@@ -233,6 +332,9 @@ func startComputeGraph() {
 
 COMPUTE:
 	for !allVoteToHalt() {
+		// send standby master the stepcount
+		go sendStandbyStepcount()
+		// send worker to run next step
 		for key := range workerInfos {
 			cmd := RUN
 			if stepcount == 0 {
@@ -248,7 +350,9 @@ COMPUTE:
 				{
 					sendCount--
 					// update workerInfos
-					workerInfos[res.GetSource()] = res.GetCommand()
+					if res.GetStepcount() == uint64(stepcount) {
+						workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
+					}
 				}
 			case id := <-workerFailure:
 				{
@@ -288,8 +392,8 @@ func main() {
 			fmt.Println("upload successfully:", uploadState)
 			startComputeGraph()
 		} else {
-			<-masterFailure
-			standByUp()
+			go standbyReivStepcount()
+			standbyWait()
 		}
 
 		finalRes = []byte("yes")

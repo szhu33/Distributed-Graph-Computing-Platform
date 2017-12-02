@@ -64,21 +64,22 @@ func listenClient() {
 	defer ln.Close()
 	fmt.Printf("listening on port %d\n", clientPort)
 	var buf bytes.Buffer
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println("error occured!")
+			return
+		}
+		defer conn.Close()
 
-	conn, err := ln.Accept()
-	if err != nil {
-		fmt.Println("error occured!")
-		return
+		_, err = io.Copy(&buf, conn)
+		if err != nil {
+			fmt.Println("error occured!")
+			return
+		}
+
+		proto.Unmarshal(buf.Bytes(), &clientRequest)
 	}
-	defer conn.Close()
-
-	_, err = io.Copy(&buf, conn)
-	if err != nil {
-		fmt.Println("error occured!")
-		return
-	}
-
-	proto.Unmarshal(buf.Bytes(), &clientRequest)
 }
 
 func sendClientRes() {
@@ -225,8 +226,8 @@ COMPUTE:
 func main() {
 	sdfs.Start()
 	myID = util.GetIDFromHostname()
-	go listenClient()
 	for {
+		listenClient()
 		app = clientRequest.GetApplication()
 
 		// TODO : upload dataset to sdfs

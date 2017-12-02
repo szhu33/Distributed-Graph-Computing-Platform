@@ -202,4 +202,7 @@ func main() {
 	// testing
 	masterID = 10
 	initialize()
+	for {
+
+	}
 }

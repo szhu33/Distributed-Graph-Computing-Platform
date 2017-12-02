@@ -67,6 +67,7 @@ func listenClient() {
 	var buf bytes.Buffer
 
 	conn, err := ln.Accept()
+	fmt.Println("ln accepted new msg from clent")
 	if err != nil {
 		fmt.Println("error occured!")
 		return
@@ -80,7 +81,7 @@ func listenClient() {
 	}
 
 	proto.Unmarshal(buf.Bytes(), &clientRequest)
-
+	fmt.Print("unmarshal meassge, client id: %d", clientRequest.GetClientID())
 }
 
 func sendClientRes() {

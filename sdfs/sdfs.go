@@ -84,7 +84,7 @@ var (
 )
 
 /* main */
-func main() {
+func Start() {
 	// create log file
 	logFile, err := os.Create(logFileName)
 	defer logFile.Close()
@@ -94,7 +94,7 @@ func main() {
 	myLog = log.New(logFile, "[ vm"+strconv.Itoa(myID+1)+" ] ", log.LstdFlags) //create new logger
 
 	// for testing purpose! should delete and get sMembershipList by MP2
-	intialize()
+	initialize()
 	handleUserInput()
 }
 
@@ -590,7 +590,7 @@ func askMasterTargets(sdfsFilename string, cmdType fileTransfer.FileTransfer_Com
 }
 
 /* others */
-func intialize() {
+func initialize() {
 	myAllSdfsFiles = make(map[string]sdfsFileInfo) // original length 0, capacity 100
 	// temp test , should get from API
 	for i := 0; i < nodeNum; i++ {

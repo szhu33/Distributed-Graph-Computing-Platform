@@ -187,6 +187,7 @@ func listenMaster() {
 			}
 
 			proto.Unmarshal(buf.Bytes(), &masterMsg)
+			fmt.Println(masterMsg)
 			if masterMsg.GetCommand() == START {
 				go initialize()
 			}

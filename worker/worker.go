@@ -145,6 +145,7 @@ func updateVertex() {
 }
 
 func initialize() {
+	fmt.Println("Entered initialize()")
 	stepcount = 0
 
 	newMasterMsg := <-masterChan

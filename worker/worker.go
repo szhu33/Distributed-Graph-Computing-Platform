@@ -36,6 +36,7 @@ type vertexInfo struct {
 	value     float64
 	msgs      []float64
 	prevMsgs  []float64
+	VertexPageRank
 }
 
 type edgeT struct {
@@ -44,7 +45,7 @@ type edgeT struct {
 }
 
 var (
-	vertex          map[int]vertexInfo
+	vertices        map[int]vertexInfo
 	stepcount       int
 	myID            int
 	masterID        uint32
@@ -111,40 +112,40 @@ func updateVertex() {
 		to1, err := strconv.ParseInt(words[1], 10, 32)
 		to := int(to1)
 		dummyToInt := to
-		toVm := int(util.HashToVMIdx(string(dummyToInt)))
-		for !isInWorkerIDs(toVm) {
+		toVM := int(util.HashToVMIdx(string(dummyToInt)))
+		for !isInWorkerIDs(toVM) {
 			dummyToInt++
-			toVm = int(util.HashToVMIdx(string(dummyToInt)))
+			toVM = int(util.HashToVMIdx(string(dummyToInt)))
 		}
 		// fmt.Printf("fromvertex:%d, tovertex:%d, fromVm:%d, toVm:%d\n", from, to, fromVm, toVm)
-		if (fromVm != myID) && (toVm != myID) {
+		if (fromVm != myID) && (toVM != myID) {
 			continue
 		}
 		if fromVm == myID {
-			if _, ok := vertex[from]; ok {
-				tempInfo := vertex[from]
+			if _, ok := vertices[from]; ok {
+				tempInfo := vertices[from]
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
-				vertex[from] = tempInfo
+				vertices[from] = tempInfo
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
-				vertex[from] = vertexInfo{active: true, neighbors: nei}
+				vertices[from] = vertexInfo{active: true, neighbors: nei}
 			}
 		} else {
-			if _, ok := vertex[to]; ok {
-				tempInfo := vertex[to]
+			if _, ok := vertices[to]; ok {
+				tempInfo := vertices[to]
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})
-				vertex[to] = tempInfo
+				vertices[to] = tempInfo
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
-				vertex[to] = vertexInfo{active: true, neighbors: nei}
+				vertices[to] = vertexInfo{active: true, neighbors: nei}
 			}
 		}
 	}
-	fmt.Println("vertex result")
-	fmt.Println(len(vertex))
-	for key, val := range vertex {
+	fmt.Println("Vertices result")
+	fmt.Println(len(vertices))
+	for key, val := range vertices {
 		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
 	}
 }
@@ -163,7 +164,9 @@ func initialize() {
 
 /* worker related function */
 func computeAllVertex() {
-
+	for vertexId, info := range vertices {
+		info.Compute()
+	}
 }
 
 /* master related function */
@@ -212,7 +215,7 @@ func main() {
 	masterChan = make(chan ssproto.Superstep)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
-	vertex = make(map[int]vertexInfo)
+	vertices = make(map[int]vertexInfo)
 	masterID = 9
 	go listenMaster()
 	for {

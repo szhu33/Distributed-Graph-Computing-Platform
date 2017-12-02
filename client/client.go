@@ -62,8 +62,8 @@ func main() {
 			fmt.Printf("error has occured! %s\n", err)
 			return
 		}
-		defer conn.Close()
 		conn.Write(pb)
+		conn.Close()
 
 		// listen on response
 		fmt.Println("Command and dataset have been sent to master, waiting for response!")

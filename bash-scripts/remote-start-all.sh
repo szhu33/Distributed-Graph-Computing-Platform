@@ -12,5 +12,5 @@ for (( i = 1; i < 11; i++ )); do
         konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git pull; cd worker; go build; ./worker; bash -l' &
     fi
 
-    sleep 0.01s
+    sleep 0.5s
 done

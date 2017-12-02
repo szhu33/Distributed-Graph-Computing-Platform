@@ -155,6 +155,7 @@ func updateVertex() {
 	for key, val := range vertices {
 		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
 	}
+	fmt.Println(idToVM)
 }
 
 func initialize() {
@@ -186,6 +187,8 @@ func computeAllVertex() {
 		}
 		if allHalt {
 			sendToMaster(HALT)
+		} else {
+			sendToMaster(ACK)
 		}
 		nextCmd := <-computeChan
 		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {

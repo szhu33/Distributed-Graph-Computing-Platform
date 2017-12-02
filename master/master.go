@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"cs425_mp4/failure-detector"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
@@ -15,6 +16,8 @@ import (
 )
 
 const (
+	masterID         = 10
+	standbyID        = 9
 	clientPort       = ":1234"
 	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
@@ -25,28 +28,46 @@ const (
 	datasetName      = "input.txt"
 )
 
-type (
-	test = masterclient.MasterClient
-)
-
 var (
-	systemHalt      bool // system state, need all workers vote to halt twice
-	workerNum       int
-	myID            int
-	clientID        int
-	standbyMasterID int
-	workerInfos     map[uint32]superstep.Superstep_Command // key:vmID, value:state
-	stepcount       int
-	workerRes       chan superstep.Superstep
-	failure         chan int
-	clientRequest   masterclient.MasterClient
-	app             string
-	finalRes        []byte
+	systemHalt    bool // system state, need all workers vote to halt twice
+	workerNum     int
+	myID          int
+	clientID      int
+	workerInfos   map[uint32]superstep.Superstep_Command // key:vmID, value:value:ACK or vote to halt
+	stepcount     int
+	workerRes     chan superstep.Superstep
+	workerFailure chan int
+	masterFailure chan bool
+	clientRequest masterclient.MasterClient
+	app           string
+	finalRes      []byte
+	isStandBy     bool
 )
 
 /* failre handling function */
-// seng msg to standby master
-// update standbyMasterID and workerIDs by failure detector
+func detectFailure() {
+	for {
+		memberStatus := fd.MemberStatus()
+		for i := 0; i < len(memberStatus); i++ {
+			if !memberStatus[i] {
+				if i == clientID {
+					continue
+				} else if i == masterID {
+					isStandBy = false
+					masterFailure <- true
+				} else {
+					workerFailure <- i
+				}
+			}
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+}
+
+func standByUp() {
+
+}
 
 // upload dataset into sdfs TODO: implement this function
 func uploadDataToSDFS() bool {
@@ -56,7 +77,6 @@ func uploadDataToSDFS() bool {
 
 /* client related function */
 func listenClient() {
-	fmt.Printf("enter listenClient\n")
 	ln, err := net.Listen("tcp", clientPort)
 	if err != nil {
 		fmt.Println("cannot listen on port")
@@ -67,7 +87,6 @@ func listenClient() {
 	var buf bytes.Buffer
 
 	conn, err := ln.Accept()
-	fmt.Println("ln accepted new msg from clent")
 	if err != nil {
 		fmt.Println("error occured!")
 		return
@@ -82,7 +101,29 @@ func listenClient() {
 
 	proto.Unmarshal(buf.Bytes(), &clientRequest)
 	clientID = int(clientRequest.GetClientID())
-	fmt.Print("unmarshal meassge, client id: %d", clientRequest.GetClientID())
+	fmt.Print("unmarshal new meassge, client id: %d", clientRequest.GetClientID())
+
+	// if not standby, need to send request to clientID to standbyMaster through clientPort
+	if !isStandBy {
+		masterToStandby := &masterclient.MasterClient{}
+		masterToStandby.ClientID = clientRequest.GetClientID()
+		masterToStandby.Application = clientRequest.GetApplication()
+
+		pb, err := proto.Marshal(masterToStandby)
+		if err != nil {
+			fmt.Println("error occured!")
+			return
+		}
+
+		conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID, clientPort))
+		//conn, err := net.Dial("tcp", "localhost"+clientPort)
+		if err != nil {
+			fmt.Printf("error has occured! %s\n", err)
+			return
+		}
+		defer conn.Close()
+		conn.Write(pb)
+	}
 }
 
 func sendClientRes() {
@@ -133,18 +174,24 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 
 func initialize() {
 	stepcount = 0
-	//update workerInfos
+	workerRes = make(chan superstep.Superstep)
+	workerInfos = make(map[uint32]superstep.Superstep_Command)
+	membersStatus := fd.MemberStatus()
+	for i := 0; i < len(membersStatus); i++ {
+		if i == clientID || i == standbyID || i == masterID {
+			continue
+		}
+		workerInfos[uint32(i)] = ACK
+	}
 }
 
 func allVoteToHalt() bool {
-	haltCount := 0
 	for _, value := range workerInfos {
-		if value == VOTETOHALT {
-			haltCount++
+		if value != VOTETOHALT {
+			return false
 		}
 	}
-
-	return haltCount == workerNum
+	return true
 }
 
 func listenWorker() {
@@ -178,15 +225,6 @@ func listenWorker() {
 }
 
 func startComputeGraph() {
-	// test purpose TODO: introduce mp2
-	for i := 0; i < workerNum; i++ {
-		workerInfos[uint32(i)] = ACK
-	}
-
-	workerRes = make(chan superstep.Superstep)
-	failure = make(chan int) // TODO: implement from mp2
-
-	go listenWorker()
 	sendCount := 0
 
 COMPUTE:
@@ -204,9 +242,9 @@ COMPUTE:
 					// update workerInfos
 					workerInfos[res.GetSource()] = res.GetCommand()
 				}
-			case id := <-failure:
+			case id := <-workerFailure:
 				{
-					if id != standbyMasterID {
+					if id != standbyID {
 						fmt.Println("a worker failed, restart right now")
 						// restart
 						initialize()
@@ -217,7 +255,6 @@ COMPUTE:
 						continue COMPUTE
 					} else {
 						fmt.Println("standby master failed, continue computing")
-						sendCount--
 					}
 				}
 			}
@@ -228,16 +265,25 @@ COMPUTE:
 
 func main() {
 	go sdfs.Start()
+	go detectFailure()
 	myID = util.GetIDFromHostname()
+	if myID != masterID {
+		isStandBy = true
+	}
 	for {
 		listenClient()
 		app = clientRequest.GetApplication()
-		fmt.Println("data is below:")
-		fmt.Println(string(clientRequest.GetDataset()))
-		// TODO : upload dataset to sdfs
-		state := uploadDataToSDFS()
-		//startComputeGraph()
-		fmt.Println("upload :", state)
+		go listenWorker()
+		initialize()
+		if !isStandBy {
+			uploadState := uploadDataToSDFS()
+			fmt.Println("upload successfully:", uploadState)
+			startComputeGraph()
+		} else {
+			<-masterFailure
+			standByUp()
+		}
+
 		finalRes = []byte("yes")
 		sendClientRes()
 	}

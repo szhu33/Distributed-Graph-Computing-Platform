@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	workerPort       = "5888"
+	workerPort       = ":5888"
 	workerNum        = 7
-	masterworkerPort = "5558"
+	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
 	START            = superstep.Superstep_START
 	RUN              = superstep.Superstep_RUN

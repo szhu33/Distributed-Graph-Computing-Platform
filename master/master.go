@@ -265,7 +265,7 @@ COMPUTE:
 
 func main() {
 	go sdfs.Start()
-	go detectFailure()
+	// go detectFailure()
 	myID = util.GetIDFromHostname()
 	if myID != masterID {
 		isStandBy = true

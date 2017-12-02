@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"cs425_mp4/api"
-	"cs425_mp4/failure-detector"
+	fd "cs425_mp4/failure-detector"
 	ssproto "cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
 	"cs425_mp4/utility"
@@ -52,6 +52,7 @@ var (
 /* failure handling function */
 func updateWorkerIDs() {
 	aliveMembers := fd.MemberStatus()
+	fmt.Println(aliveMembers)
 	k := 0
 	i := 0
 	for k < workerNum {

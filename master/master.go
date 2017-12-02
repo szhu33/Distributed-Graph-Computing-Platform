@@ -16,7 +16,7 @@ import (
 
 const (
 	clientPort       = ":1234"
-	masterworkerPort = "5558"
+	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
 	START            = superstep.Superstep_START
 	RUN              = superstep.Superstep_RUN
@@ -61,7 +61,7 @@ func listenClient() {
 		return
 	}
 	defer ln.Close()
-
+	fmt.Printf("listening on port %d\n", clientPort)
 	var buf bytes.Buffer
 
 	conn, err := ln.Accept()

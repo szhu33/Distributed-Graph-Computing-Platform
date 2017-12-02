@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"cs425_mp4/api"
 	fd "cs425_mp4/failure-detector"
 	ssproto "cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
@@ -26,6 +27,7 @@ const (
 	START            = ssproto.Superstep_START
 	RUN              = ssproto.Superstep_RUN
 	ACK              = ssproto.Superstep_ACK
+	HALT             = ssproto.Superstep_VOTETOHALT
 	VOTETOHALT       = ssproto.Superstep_VOTETOHALT
 	localInputName   = "localFile.txt"
 )
@@ -46,14 +48,16 @@ type edgeT struct {
 
 var (
 	vertices        map[int]vertexInfo
-	stepcount       int
+	stepcount       uint64
 	myID            int
 	masterID        uint32
-	masterChan      chan ssproto.Superstep
+	initChan        chan ssproto.Superstep
+	computeChan     chan ssproto.Superstep
 	masterMsg       ssproto.Superstep
 	workerIDs       [totalNodes]int //should range from 0-9
 	datasetFilename string
 	dataset         []byte
+	idToVM          map[int]int
 )
 
 /* failure handling function */
@@ -104,10 +108,10 @@ func updateVertex() {
 		from1, err := strconv.ParseInt(words[0], 10, 32)
 		from := int(from1)
 		dummyFromInt := from
-		fromVm := int(util.HashToVMIdx(string(dummyFromInt)))
-		for !isInWorkerIDs(fromVm) {
+		fromVM := int(util.HashToVMIdx(string(dummyFromInt)))
+		for !isInWorkerIDs(fromVM) {
 			dummyFromInt++
-			fromVm = int(util.HashToVMIdx(string(dummyFromInt)))
+			fromVM = int(util.HashToVMIdx(string(dummyFromInt)))
 		}
 		to1, err := strconv.ParseInt(words[1], 10, 32)
 		to := int(to1)
@@ -117,11 +121,14 @@ func updateVertex() {
 			dummyToInt++
 			toVM = int(util.HashToVMIdx(string(dummyToInt)))
 		}
-		// fmt.Printf("fromvertex:%d, tovertex:%d, fromVm:%d, toVm:%d\n", from, to, fromVm, toVm)
-		if (fromVm != myID) && (toVM != myID) {
+		// fmt.Printf("fromvertex:%d, tovertex:%d, fromVM:%d, toVm:%d\n", from, to, fromVM, toVm)
+		idToVM[from] = toVM
+		idToVM[to] = toVM
+
+		if (fromVM != myID) && (toVM != myID) {
 			continue
 		}
-		if fromVm == myID {
+		if fromVM == myID {
 			if _, ok := vertices[from]; ok {
 				tempInfo := vertices[from]
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
@@ -152,8 +159,9 @@ func updateVertex() {
 
 func initialize() {
 	stepcount = 0
-
-	newMasterMsg := <-masterChan
+	vertices = make(map[int]vertexInfo)
+	idToVM = make(map[int]int)
+	newMasterMsg := <-initChan
 	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
 
@@ -164,9 +172,59 @@ func initialize() {
 
 /* worker related function */
 func computeAllVertex() {
-	for vertexId, info := range vertices {
-		info.Compute()
+	for {
+		var msgs api.MessageIterator
+		for _, info := range vertices {
+			info.Compute(msgs)
+		}
+
+		allHalt := true
+		for _, info := range vertices {
+			if info.active {
+				allHalt = false
+			}
+		}
+		if allHalt {
+			sendToMaster(HALT)
+		}
+		nextCmd := <-computeChan
+		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {
+			return
+		}
+		stepcount = nextCmd.GetStepcount()
 	}
+
+}
+
+func sendToMaster(cmd ssproto.Superstep_Command) {
+	newHaltMsg := &ssproto.Superstep{Source: uint32(myID), Command: cmd, Stepcount: stepcount}
+	pb, err := proto.Marshal(newHaltMsg)
+	if err != nil {
+		fmt.Println("Error when marshal halt message.", err.Error())
+	}
+
+	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID), masterworkerPort))
+	if err != nil {
+		fmt.Println("Dial to master failed!", err.Error())
+	}
+	defer conn.Close()
+	conn.Write(pb)
+}
+
+func sendToWorker(vid int, msg []byte) {
+	dest := idToVM[vid]
+
+	if dest == myID {
+		// Insert to local queue
+	} else {
+		conn, err := net.Dial("tcp", util.HostnameStr(dest, workerPort))
+		if err != nil {
+			fmt.Println("Dial to master failed!", err.Error())
+		}
+		defer conn.Close()
+		conn.Write(msg)
+	}
+
 }
 
 /* master related function */
@@ -199,9 +257,9 @@ func listenMaster() {
 			fmt.Println(masterMsg)
 			if masterMsg.GetCommand() == START {
 				go initialize()
+				initChan <- masterMsg
 			}
 
-			masterChan <- masterMsg
 			if masterMsg.GetSource() != masterID {
 				masterID = masterMsg.GetSource()
 			}
@@ -212,10 +270,9 @@ func listenMaster() {
 
 func main() {
 	//TODO: get myid from hostname
-	masterChan = make(chan ssproto.Superstep)
+	initChan = make(chan ssproto.Superstep)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
-	vertices = make(map[int]vertexInfo)
 	masterID = 9
 	go listenMaster()
 	for {

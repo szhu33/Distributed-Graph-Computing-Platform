@@ -94,3 +94,8 @@ func ModLength(value int, mod int) int {
 	}
 	return result
 }
+
+// HostnameStr returns hostname given node id (0-indexed) and port
+func HostnameStr(id int, port string) string {
+	return fmt.Sprintf(nodeName, id, port)
+}

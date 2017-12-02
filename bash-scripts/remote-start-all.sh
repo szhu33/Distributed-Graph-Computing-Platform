@@ -6,6 +6,8 @@ for (( i = 1; i < 11; i++ )); do
         konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git pull; cd master; go build; ./master' &
     elif [[ $i -eq 7 ]]; then
         konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git pull; cd client; go build; ./client' &
+    elif [[ $i -eq 9 ]]; then
+        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git pull; cd master; go build;' &
     else
         konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git pull; cd worker; go build; ./worker' &
     fi

@@ -271,6 +271,7 @@ func listenMaster() {
 func main() {
 	//TODO: get myid from hostname
 	initChan = make(chan ssproto.Superstep)
+	computeChan = make(chan ssproto.Superstep)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	masterID = 9

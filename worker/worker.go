@@ -20,6 +20,7 @@ import (
 
 const (
 	workerPort       = ":5888"
+	totalNodes       = 10
 	workerNum        = 7
 	masterworkerPort = ":5558"
 	nodeName         = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
@@ -45,7 +46,7 @@ var (
 	masterID        uint32
 	masterChan      chan ssproto.Superstep
 	masterMsg       ssproto.Superstep
-	workerIDs       []int //should range from 0-9
+	workerIDs       [totalNodes]int //should range from 0-9
 	datasetFilename string
 	dataset         []byte
 )

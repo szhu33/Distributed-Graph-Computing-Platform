@@ -177,7 +177,6 @@ func initialize() {
 	workerRes = make(chan superstep.Superstep)
 	workerInfos = make(map[uint32]superstep.Superstep_Command)
 	membersStatus := fd.MemberStatus()
-	fmt.Println(membersStatus)
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
 			continue
@@ -266,7 +265,7 @@ COMPUTE:
 
 func main() {
 	go sdfs.Start()
-	// go detectFailure()
+	go detectFailure()
 	myID = util.GetIDFromHostname() + 1
 	if myID != masterID {
 		isStandBy = true

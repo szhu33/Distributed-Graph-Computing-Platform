@@ -55,6 +55,7 @@ func uploadDataToSDFS() bool {
 
 /* client related function */
 func listenClient() {
+	fmt.Printf("enter listenClient\n")
 	ln, err := net.Listen("tcp", clientPort)
 	if err != nil {
 		fmt.Println("cannot listen on port")
@@ -224,8 +225,8 @@ COMPUTE:
 func main() {
 	sdfs.Start()
 	myID = util.GetIDFromHostname()
+	go listenClient()
 	for {
-		listenClient()
 		app = clientRequest.GetApplication()
 
 		// TODO : upload dataset to sdfs

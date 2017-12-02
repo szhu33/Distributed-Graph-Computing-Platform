@@ -145,10 +145,10 @@ func updateVertex() {
 }
 
 func initialize() {
-	fmt.Println("Entered initialize()")
 	stepcount = 0
 
 	newMasterMsg := <-masterChan
+	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
 
 	updateWorkerIDs()

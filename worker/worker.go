@@ -146,8 +146,8 @@ func updateVertex() {
 
 func initialize() {
 	stepcount = 0
-	newMasterMsg := <-masterChan
 
+	newMasterMsg := <-masterChan
 	datasetFilename = newMasterMsg.GetDatasetFilename()
 
 	updateWorkerIDs()
@@ -187,15 +187,15 @@ func listenMaster() {
 			}
 
 			proto.Unmarshal(buf.Bytes(), &masterMsg)
-			masterChan <- masterMsg
+			if masterMsg.GetCommand() == START {
+				go initialize()
+			}
 
+			masterChan <- masterMsg
 			if masterMsg.GetSource() != masterID {
 				masterID = masterMsg.GetSource()
 			}
 
-			if masterMsg.GetCommand() == START {
-				go initialize()
-			}
 		}()
 	}
 }
@@ -205,10 +205,8 @@ func main() {
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	vertex = make(map[int]vertexInfo)
-	go listenMaster()
-	// testing
 	masterID = 9
-	initialize()
+	go listenMaster()
 	for {
 		time.Sleep(time.Second)
 	}

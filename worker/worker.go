@@ -204,6 +204,7 @@ func listenMaster() {
 
 func main() {
 	//TODO: get myid from hostname
+	masterChan = make(chan ssproto.Superstep)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	vertex = make(map[int]vertexInfo)

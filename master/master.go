@@ -222,6 +222,7 @@ COMPUTE:
 }
 
 func main() {
+	sdfs.Start()
 	myID = util.GetIDFromHostname()
 	for {
 		listenClient()

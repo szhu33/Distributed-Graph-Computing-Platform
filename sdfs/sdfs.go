@@ -98,56 +98,6 @@ func Start() {
 	handleUserInput()
 }
 
-/* put command */
-// graph computing master put
-func PutSendAndWaitACK(buf []byte, sdfsFilename string, timestamp time.Time) bool {
-	fmt.Println("enter mp3 function")
-	// generate msg, hash, build tcp connection and write
-	myMsg := &fileTransfer.FileTransfer{} //membership
-	myMsg.Source = uint32(myID)
-	myMsg.SdfsFilename = sdfsFilename
-	myMsg.Command = PUT
-	myMsg.File = buf
-	msgTime, err := ptypes.TimestampProto(timestamp)
-	if err != nil {
-		fmt.Println("Error parsing time.", err.Error())
-		return false
-	}
-	myMsg.Timestamp = msgTime
-
-	targetIdx := util.HashToVMIdx(sdfsFilename)
-	for i := 0; i < replicaNum; i++ {
-		for !sMembershipList[targetIdx] {
-			targetIdx++
-			targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
-		}
-		fmt.Printf("targetIdx: %d\n", targetIdx+1)
-		err := util.SendWithMarshal(filePort, int(targetIdx), myMsg)
-		if err != nil {
-			continue
-		}
-		targetIdx++
-		targetIdx = uint32(util.ModLength(int(targetIdx), listLength))
-	}
-
-	// wait for quorum ack
-	ackNum := 0
-	timer := time.NewTimer(10 * time.Second)
-
-	for ackNum < quorum {
-		select {
-		case <-timer.C:
-			fmt.Println("Did not get enough ACKs before timeout.")
-			return false
-		case newACK := <-ackPutChan:
-			if newACK.GetSdfsFilename() == sdfsFilename {
-				ackNum++
-			}
-		}
-	}
-	return true
-}
-
 // file system put
 func putClient(localFilename string, sdfsFilename string) {
 	insertTime = time.Now()

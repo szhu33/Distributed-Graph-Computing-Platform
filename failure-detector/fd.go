@@ -59,6 +59,7 @@ var (
 	ticker         *time.Ticker
 	myLog          *log.Logger
 	iHaveLeft      = false
+	isInitialized  = false
 )
 
 func sendMsg() {
@@ -480,6 +481,7 @@ func Start() {
 
 	initialize()
 	// tempTest()
+	isInitialized = true
 
 	go listenMsg() // open new go routine to listen
 
@@ -505,4 +507,9 @@ func MemberStatus() [listLength]bool {
 		}
 	}
 	return stat
+}
+
+// GetIsInitialized returns the status of initialization
+func GetIsInitialized() bool {
+	return isInitialized
 }

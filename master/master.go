@@ -47,6 +47,10 @@ var (
 /* failre handling function */
 func detectFailure() {
 	for {
+		if !fd.GetIsInitialized() {
+			time.Sleep(time.Microsecond)
+			continue
+		}
 		memberStatus := fd.MemberStatus()
 		for i := 0; i < len(memberStatus); i++ {
 			if !memberStatus[i] {

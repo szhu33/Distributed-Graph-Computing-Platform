@@ -172,28 +172,30 @@ func listenMaster() {
 		var buf bytes.Buffer
 
 		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Println("error occured!", err.Error())
-			return
-		}
-		defer conn.Close()
+		func() {
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
+			defer conn.Close()
 
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!", err.Error())
-			return
-		}
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
 
-		proto.Unmarshal(buf.Bytes(), &masterMsg)
-		masterChan <- masterMsg
+			proto.Unmarshal(buf.Bytes(), &masterMsg)
+			masterChan <- masterMsg
 
-		if masterMsg.GetSource() != masterID {
-			masterID = masterMsg.GetSource()
-		}
+			if masterMsg.GetSource() != masterID {
+				masterID = masterMsg.GetSource()
+			}
 
-		if masterMsg.GetCommand() == START {
-			go initialize()
-		}
+			if masterMsg.GetCommand() == START {
+				go initialize()
+			}
+		}()
 	}
 }
 

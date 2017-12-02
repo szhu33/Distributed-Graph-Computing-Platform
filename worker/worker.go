@@ -122,7 +122,7 @@ func updateVertex() {
 			toVM = int(util.HashToVMIdx(string(dummyToInt)))
 		}
 		// fmt.Printf("fromvertex:%d, tovertex:%d, fromVM:%d, toVm:%d\n", from, to, fromVM, toVm)
-		idToVM[from] = toVM
+		idToVM[from] = fromVM
 		idToVM[to] = toVM
 
 		if (fromVM != myID) && (toVM != myID) {

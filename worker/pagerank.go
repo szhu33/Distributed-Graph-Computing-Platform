@@ -28,6 +28,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
 			break
 		}
 		fmt.Println(val, currVal)
+		break
 	}
 }
 

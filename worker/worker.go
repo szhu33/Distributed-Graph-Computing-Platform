@@ -98,6 +98,8 @@ func isInWorkerIDs(input int) bool {
 }
 
 func updateVertex() {
+
+	lines := 0
 	reader := bufio.NewReader(bytes.NewReader(dataset))
 	fmt.Println()
 	for {
@@ -109,6 +111,7 @@ func updateVertex() {
 			fmt.Println("Error read file!", rdErr.Error())
 			return
 		}
+		lines += 1
 		words := strings.Fields(line)
 		_, err := strconv.ParseInt(words[0], 10, 32)
 		if err != nil {
@@ -184,6 +187,8 @@ func updateVertex() {
 			}
 		}
 	}
+	fmt.Println("# Lines:", lines)
+	fmt.Println("# Vertices:", NumVertices())
 	// fmt.Println("Vertices len:", len(vertices))
 	// fmt.Println()
 	// for key, val := range vertices {
@@ -448,7 +453,7 @@ func listenWorker() {
 				fmt.Println("listenWorker: Error unmarshall.", err.Error())
 				return
 			}
-			fmt.Println(newWorkerMsg)
+			// fmt.Println(newWorkerMsg)
 			for _, value := range newWorkerMsg.Vertices {
 				toVertexID := int(value.GetToVertex())
 				msgQMutex.Lock()

@@ -345,29 +345,31 @@ func listenMaster() {
 			fmt.Println("error occured!", err.Error())
 			return
 		}
-		defer conn.Close()
+		go func() {
+			defer conn.Close()
 
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!", err.Error())
-			return
-		}
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
 
-		proto.Unmarshal(buf.Bytes(), &masterMsg)
-		// fmt.Println(masterMsg)
-		if masterMsg.GetSource() != masterID {
-			masterID = masterMsg.GetSource()
-		}
-		if masterMsg.GetCommand() == START {
-			if restartFlag {
+			proto.Unmarshal(buf.Bytes(), &masterMsg)
+			// fmt.Println(masterMsg)
+			if masterMsg.GetSource() != masterID {
+				masterID = masterMsg.GetSource()
+			}
+			if masterMsg.GetCommand() == START {
+				if restartFlag {
+					computeChan <- masterMsg
+				}
+				restartFlag = true
+				go initialize()
+				initChan <- masterMsg
+			} else {
 				computeChan <- masterMsg
 			}
-			restartFlag = true
-			go initialize()
-			initChan <- masterMsg
-		} else {
-			computeChan <- masterMsg
-		}
+		}()
 	}
 }
 
@@ -390,30 +392,32 @@ func listenWorker() {
 			fmt.Println("error occured!", err.Error())
 			return
 		}
-		defer conn.Close()
+		go func() {
+			defer conn.Close()
 
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!", err.Error())
-			return
-		}
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
 
-		newWorkerMsg := &workerpb.Worker{}
-		err1 := proto.Unmarshal(buf.Bytes(), newWorkerMsg)
-		if err1 != nil {
-			fmt.Println("listenWorker: Error unmarshall.", err.Error())
-			continue
-		}
-		// fmt.Println(newWorkerMsg)
-		toVertexID := int(newWorkerMsg.GetToVertex())
-		msgQMutex.Lock()
-		tempQ := nextMsgQueue[toVertexID]
-		tempQ = append(tempQ, newWorkerMsg)
-		nextMsgQueue[toVertexID] = tempQ
-		msgQMutex.Unlock()
-		activeMutex.Lock()
-		active[toVertexID] = true
-		activeMutex.Unlock()
+			newWorkerMsg := &workerpb.Worker{}
+			err1 := proto.Unmarshal(buf.Bytes(), newWorkerMsg)
+			if err1 != nil {
+				fmt.Println("listenWorker: Error unmarshall.", err.Error())
+				return
+			}
+			// fmt.Println(newWorkerMsg)
+			toVertexID := int(newWorkerMsg.GetToVertex())
+			msgQMutex.Lock()
+			tempQ := nextMsgQueue[toVertexID]
+			tempQ = append(tempQ, newWorkerMsg)
+			nextMsgQueue[toVertexID] = tempQ
+			msgQMutex.Unlock()
+			activeMutex.Lock()
+			active[toVertexID] = true
+			activeMutex.Unlock()
+		}()
 	}
 }
 

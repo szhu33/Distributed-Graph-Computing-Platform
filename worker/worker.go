@@ -318,6 +318,7 @@ func sendToWorker(msgpb *workerpb.Worker) {
 		conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
 		if err != nil {
 			fmt.Println("Dial to worker failed!", err.Error())
+			return
 		}
 		defer conn.Close()
 		conn.Write(pb)

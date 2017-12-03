@@ -309,9 +309,13 @@ func getAllResults() {
 		// finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
 	}
-	for finalRes.Len() > 0 {
+	// for finalRes.Len() > 0 {
+	// 	elem := heap.Pop(finalRes).(*superstep.Vertex)
+	// 	fmt.Println(*elem)
+	// }
+	for idx := 0; idx < 25; idx++ {
 		elem := heap.Pop(finalRes).(*superstep.Vertex)
-		fmt.Println(*elem)
+		fmt.Println(elem)
 	}
 }
 func allVoteToHalt() bool {

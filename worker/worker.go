@@ -161,7 +161,7 @@ func updateVertex() {
 				fmt.Println("however to 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = to
-				tempN := neighborMap[from]
+				tempN := neighborMap[to]
 				tempN = append(tempN, edgeT{dest: from, value: 1})
 				neighborMap[to] = tempN
 				vertices[to] = tempInfo

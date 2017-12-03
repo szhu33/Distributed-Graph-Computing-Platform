@@ -103,5 +103,5 @@ func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {
 }
 
 func (v VertexPageRank) GetOutEdge() []edgeT {
-	return vertices[v.Vertex_id()].neighbors
+	return neighborMap[v.Vertex_id()]
 }

@@ -33,7 +33,6 @@ const (
 )
 
 type vertexInfo struct {
-	neighbors []edgeT
 	VertexPageRank
 }
 
@@ -58,6 +57,7 @@ var (
 	active          map[int]bool
 	msgQueue        map[int][]*workerpb.Worker
 	nextMsgQueue    map[int][]*workerpb.Worker
+	neighborMap     map[int][]edgeT
 )
 
 /* failure handling function */
@@ -138,14 +138,17 @@ func updateVertex() {
 				fmt.Println("however from ! 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = from
-				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
 				vertices[from] = tempInfo
+				tempN := neighborMap[from]
+				tempN = append(tempN, edgeT{dest: to, value: 1})
+				neighborMap[from] = tempN
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
 				vpr := VertexPageRank{Id: from, Value: 1}
+				vertices[from] = vertexInfo{VertexPageRank: vpr}
 				fmt.Println(vpr)
-				vertices[from] = vertexInfo{neighbors: nei, VertexPageRank: vpr}
+				neighborMap[from] = nei
 				msgQueue[from] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[from] = make([]*workerpb.Worker, 0)
 			}
@@ -157,14 +160,17 @@ func updateVertex() {
 				fmt.Println("however to 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = to
-				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})
+				tempN := neighborMap[from]
+				tempN = append(tempN, edgeT{dest: from, value: 1})
+				neighborMap[to] = tempN
 				vertices[to] = tempInfo
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
 				vpr := VertexPageRank{Id: to, Value: 1}
+				vertices[to] = vertexInfo{VertexPageRank: vpr}
 				fmt.Println(vpr)
-				vertices[to] = vertexInfo{neighbors: nei, VertexPageRank: vpr}
+				neighborMap[to] = nei
 				msgQueue[to] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[to] = make([]*workerpb.Worker, 0)
 			}
@@ -173,7 +179,7 @@ func updateVertex() {
 	fmt.Println("Vertices result")
 	fmt.Println(len(vertices))
 	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", active[key], ", neighbors:", val.neighbors)
+		fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val)
 	}
 	fmt.Println(idToVM)
 }
@@ -185,6 +191,7 @@ func initialize() {
 	active = make(map[int]bool)
 	msgQueue = make(map[int][]*workerpb.Worker)
 	nextMsgQueue = make(map[int][]*workerpb.Worker)
+	neighborMap = make(map[int][]edgeT)
 	newMasterMsg := <-initChan
 	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
@@ -244,7 +251,7 @@ func returnResults() {
 	fmt.Println("After computation:")
 	fmt.Println(len(vertices))
 	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", active[key], ", neighbors:", val.neighbors, val.VertexPageRank)
+		fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val.VertexPageRank)
 	}
 
 	for key, info := range vertices {

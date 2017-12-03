@@ -325,6 +325,7 @@ func listenMaster() {
 			}
 			if masterMsg.GetCommand() == START {
 				if restartFlag {
+					restartFlag = true
 					computeChan <- masterMsg
 				}
 				go initialize()

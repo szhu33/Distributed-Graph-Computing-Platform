@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -39,6 +40,7 @@ func main() {
 			continue
 		}
 
+		start := time.Now()
 		dataset, err := ioutil.ReadFile(data)
 		if err != nil {
 			fmt.Println("unable to open the file, please enter correct command\n")
@@ -87,6 +89,7 @@ func main() {
 
 		proto.Unmarshal(buf, &output)
 
+		fmt.Println(time.Since(start))
 		fmt.Println("get output!")
 		fmt.Println(string(output.GetResult()))
 	}

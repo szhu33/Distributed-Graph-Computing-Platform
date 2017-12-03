@@ -59,7 +59,7 @@ func SendWithMarshal(port string, targetID int, msg *fileTransfer.FileTransfer) 
 func HashToVMIdx(filename string) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(filename))
-	fmt.Printf("hash to : %d\n", h.Sum32()%10)
+	// fmt.Printf("hash to : %d\n", h.Sum32()%10)
 	return h.Sum32() % 10
 }
 

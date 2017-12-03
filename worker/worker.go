@@ -212,6 +212,7 @@ func computeAllVertex() {
 			info.msgQueue = info.nextMsgQueue
 			info.nextMsgQueue = make([]*workerpb.Worker, 0)
 			vertices[key] = info
+			fmt.Println(vertices[key])
 		}
 	}
 

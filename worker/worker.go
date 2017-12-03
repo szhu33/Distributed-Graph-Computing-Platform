@@ -244,7 +244,7 @@ func returnResults() {
 	fmt.Println("After computation:")
 	fmt.Println(len(vertices))
 	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
+		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors, val.VertexPageRank)
 	}
 
 	for key, info := range vertices {
@@ -384,7 +384,10 @@ func listenWorker() {
 			}
 
 			newWorkerMsg := &workerpb.Worker{}
-			proto.Unmarshal(buf.Bytes(), newWorkerMsg)
+			err := proto.Unmarshal(buf.Bytes(), newWorkerMsg)
+			if err != nil {
+				fmt.Println("listenWorker: Error unmarshall.", err.Error())
+			}
 			fmt.Println(newWorkerMsg)
 			toVertexID := int(newWorkerMsg.GetToVertex())
 			temp := vertices[toVertexID]

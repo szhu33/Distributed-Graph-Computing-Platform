@@ -19,11 +19,14 @@ type VertexPageRank struct {
 // Compute is the client implementation
 // return the active status of the vertex
 func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
+	if stepcount == 0 {
+		fmt.Println("stepcount0!")
+	}
 	if v.Superstep() >= 1 {
 		sum := 0.0
 		for {
 			val, isEnd := msgs.Next()
-			fmt.Println("isEnd:", isEnd, "val:", val)
+			fmt.Println("stepcount:", stepcount, "vertexID: ", v.Id, "Msg val:", val)
 			if isEnd {
 				break
 			}

@@ -52,12 +52,13 @@ type vertexMsgQ struct {
 	index int
 }
 
-func (q vertexMsgQ) Next() (interface{}, bool) {
+func (q *vertexMsgQ) Next() (interface{}, bool) {
 	if (q.index + 1) >= len(q.queue) {
 		return 0.0, true
 	}
 	rd := bytes.NewReader(q.queue[q.index].GetMsgValue())
 	dec := gob.NewDecoder(rd)
+	q.index++
 	var val float64
 	err := dec.Decode(&val)
 	if err != nil {

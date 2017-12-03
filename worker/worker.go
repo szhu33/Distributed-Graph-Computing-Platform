@@ -183,7 +183,7 @@ func computeAllVertex() {
 			if !info.active {
 				continue
 			}
-			var mq = vertexMsgQ{queue: info.msgQueue, index: 0}
+			var mq = &vertexMsgQ{queue: info.msgQueue, index: 0}
 
 			info.active = info.Compute(mq)
 			vertices[key] = info

@@ -290,7 +290,7 @@ func sendToWorker(msgpb *workerpb.Worker) {
 	dest := idToVM[toVertexID]
 	if dest == myID {
 		// Insert to local queue
-		temp := vertices[dest]
+		temp := vertices[toVertexID]
 		temp.nextMsgQueue = append(temp.nextMsgQueue, msgpb)
 		vertices[toVertexID] = temp
 	} else {

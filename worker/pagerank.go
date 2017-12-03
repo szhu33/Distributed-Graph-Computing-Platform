@@ -11,9 +11,9 @@ import (
 // VertexPageRank is actual implementation of vertex in PageRank
 type VertexPageRank struct {
 	api.Vertex
-	value float64
+	Value float64
 	edges map[int]float64
-	id    int
+	Id    int
 }
 
 // Compute is the client implementation
@@ -69,12 +69,12 @@ func (q vertexMsgQ) Next() (interface{}, bool) {
 
 // GetValue returns value of the vertex
 func (v VertexPageRank) GetValue() float64 {
-	return v.value
+	return v.Value
 }
 
 // MutableValue changes the value in the vertex
 func (v *VertexPageRank) MutableValue(newVal float64) {
-	v.value = newVal
+	v.Value = newVal
 }
 
 // Superstep returns the step count
@@ -84,7 +84,7 @@ func (v VertexPageRank) Superstep() uint64 {
 
 // Vertex_id returns the id of the vertex
 func (v VertexPageRank) Vertex_id() int {
-	return v.id
+	return v.Id
 }
 
 // VoteToHalt halt the vertex
@@ -104,7 +104,7 @@ func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {
 			fmt.Println("Cannot encode msg value when sending msg")
 			return
 		}
-		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: b.Bytes()}
+		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.Id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: b.Bytes()}
 		sendToWorker(newWorkerMsg)
 
 	}

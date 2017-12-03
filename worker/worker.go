@@ -137,7 +137,8 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
-				vertices[from] = vertexInfo{active: true, neighbors: nei}
+				vpr := VertexPageRank{Id: from, Value: 1}
+				vertices[from] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
 			}
 		} else {
 			if _, ok := vertices[to]; ok {
@@ -147,7 +148,8 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
-				vertices[to] = vertexInfo{active: true, neighbors: nei}
+				vpr := VertexPageRank{Id: to, Value: 1}
+				vertices[to] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
 			}
 		}
 	}

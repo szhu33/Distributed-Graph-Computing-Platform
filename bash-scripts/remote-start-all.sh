@@ -5,11 +5,11 @@ for (( i = 1; i < 11; i++ )); do
     if [[ $i -eq 10 ]]; then
         konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout master; git pull; cd master; go build; clear; ./master; bash -l' &
     elif [[ $i -eq 5 ]]; then
-        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout; git pull; cd client; go build; clear; ./client; bash -l' &
+        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout master; git pull; cd client; go build; clear; ./client; bash -l' &
     elif [[ $i -eq 9 ]]; then
-        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout; git pull; cd master; go build; clear; ./master; bash -l' &
+        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout master; git pull; cd master; go build; clear; ./master; bash -l' &
     else
-        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout; git pull; cd worker; go build; clear; ./worker; bash -l' &
+        konsole --new-tab -e ssh -t $var 'export PATH=/usr/local/go/bin:$PATH; cd ~/go/src/cs425_mp4; git checkout master; git pull; cd worker; go build; clear; ./worker; bash -l' &
     fi
 
     sleep 0.1s

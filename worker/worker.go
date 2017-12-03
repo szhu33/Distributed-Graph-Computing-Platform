@@ -244,10 +244,11 @@ func returnResults() {
 		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
 	}
 
-	for _, info := range vertices {
+	for key, info := range vertices {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()
 		newV.Id = uint64(info.VertexPageRank.Id)
+		fmt.Println("key in vertices: ",key "in VertexPageRank",newV)
 		ret = append(ret, &newV)
 	}
 	newMsg := &ssproto.Superstep{Source: uint32(myID)}

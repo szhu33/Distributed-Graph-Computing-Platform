@@ -250,7 +250,7 @@ func returnResults() {
 	for key, info := range vertices {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()
-		newV.Id = uint64(info.VertexPageRank.Id)
+		newV.Id = uint64(key)
 		fmt.Println("key in vertices: ", key, "in VertexPageRank", newV)
 		ret = append(ret, &newV)
 	}

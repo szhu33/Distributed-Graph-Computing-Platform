@@ -103,25 +103,29 @@ func standbyReivStepcount() {
 	defer ln.Close()
 	fmt.Printf("listening on port %s\n", clientPort)
 	buf := make([]byte, 256)
+	for {
+		func() {
+			conn, err := ln.Accept()
+			if err != nil {
+				fmt.Println("error occured!")
+				return
+			}
+			defer conn.Close()
 
-	conn, err := ln.Accept()
-	if err != nil {
-		fmt.Println("error occured!")
-		return
+			_, err = conn.Read(buf)
+			if err != nil {
+				fmt.Println("error occured!")
+				return
+			}
+
+			var newStepcount superstep.Superstep
+			proto.Unmarshal(buf, &newStepcount)
+			stepcount = int(newStepcount.GetStepcount())
+			standbyCount = workerNum
+			fmt.Printf("new meassge form master, stepcount: %d\n", stepcount)
+		}()
 	}
-	defer conn.Close()
 
-	_, err = conn.Read(buf)
-	if err != nil {
-		fmt.Println("error occured!")
-		return
-	}
-
-	var newStepcount superstep.Superstep
-	proto.Unmarshal(buf, &newStepcount)
-	stepcount = int(newStepcount.GetStepcount())
-	standbyCount = workerNum
-	fmt.Printf("new meassge form master, stepcount: %d\n", stepcount)
 }
 
 func standbyWait() {
@@ -375,7 +379,7 @@ COMPUTE:
 			}
 		}
 		stepcount++
-		fmt.Println("stepcount ++, now is %d\n", stepcount)
+		fmt.Println("stepcount ++, now is", stepcount)
 	}
 }
 

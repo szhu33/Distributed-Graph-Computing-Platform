@@ -277,7 +277,7 @@ func listenMaster() {
 				}
 				go initialize()
 				initChan <- masterMsg
-			} else if masterMsg.GetCommand() == HALT {
+			} else {
 				computeChan <- masterMsg
 			}
 

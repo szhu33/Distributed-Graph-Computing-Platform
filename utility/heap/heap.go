@@ -9,7 +9,7 @@ import (
 type VertexHeap []*superstep.Vertex
 
 func (h VertexHeap) Len() int           { return len(h) }
-func (h VertexHeap) Less(i, j int) bool { return h[i].GetValue() < h[j].GetValue() }
+func (h VertexHeap) Less(i, j int) bool { return h[i].GetValue() > h[j].GetValue() }
 func (h VertexHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
 func (h *VertexHeap) Push(x interface{}) {

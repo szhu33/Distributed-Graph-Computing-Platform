@@ -310,7 +310,7 @@ func getAllResults() {
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
 	}
 	for finalRes.Len() > 0 {
-		elem := finalRes.Pop().(*superstep.Vertex)
+		elem := heap.Pop(finalRes).(*superstep.Vertex)
 		fmt.Println(*elem)
 	}
 }

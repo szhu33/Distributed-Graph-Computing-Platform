@@ -320,6 +320,7 @@ func listenWorker() {
 			workerRes <- pb
 		} else {
 			if int(pb.GetStepcount()) == stepcount {
+				fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
 				standbyCount--
 			}
 		}
@@ -350,6 +351,7 @@ COMPUTE:
 				{
 					sendCount--
 					// update workerInfos
+					fmt.Printf("received ACK form worker: %d, command is %s\n", res.GetSource(), res.GetCommand())
 					if res.GetStepcount() == uint64(stepcount) {
 						workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
 					}
@@ -372,6 +374,7 @@ COMPUTE:
 			}
 		}
 		stepcount++
+		fmt.Println("stepcount ++, now is %d\n", stepcount)
 	}
 }
 

@@ -61,7 +61,8 @@ var (
 	appName         string
 	SSSP_source     int
 
-	mutex = &sync.Mutex{}
+	msgQMutex   = &sync.Mutex{}
+	activeMutex = &sync.Mutex{}
 )
 
 /* failure handling function */
@@ -213,7 +214,9 @@ func computeAllVertex() {
 				continue
 			}
 			var mq = &vertexMsgQ{queue: msgQueue[key], index: 0}
+			activeMutex.Lock()
 			active[key] = info.Compute(mq)
+			activeMutex.Unlock()
 			vertices[key] = info
 		}
 		allHalt := true
@@ -301,11 +304,11 @@ func sendToWorker(msgpb *workerpb.Worker) {
 	dest := idToVM[toVertexID]
 	if dest == myID {
 		// Insert to local queue
-		mutex.Lock()
+		msgQMutex.Lock()
 		temp := nextMsgQueue[toVertexID]
 		temp = append(temp, msgpb)
 		nextMsgQueue[toVertexID] = temp
-		mutex.Unlock()
+		msgQMutex.Unlock()
 	} else {
 		// Send to other worker
 		pb, err := proto.Marshal(msgpb)
@@ -399,12 +402,14 @@ func listenWorker() {
 		}
 		// fmt.Println(newWorkerMsg)
 		toVertexID := int(newWorkerMsg.GetToVertex())
-		mutex.Lock()
+		msgQMutex.Lock()
 		tempQ := nextMsgQueue[toVertexID]
 		tempQ = append(tempQ, newWorkerMsg)
 		nextMsgQueue[toVertexID] = tempQ
-		mutex.Unlock()
+		msgQMutex.Unlock()
+		activeMutex.Lock()
 		active[toVertexID] = true
+		activeMutex.Unlock()
 	}
 }
 

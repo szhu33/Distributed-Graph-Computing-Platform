@@ -38,7 +38,7 @@ type vertexInfo struct {
 	msgQueue     []*workerpb.Worker
 	nextMsgQueue []*workerpb.Worker
 
-	VertexPageRank
+	realV VertexPageRank
 }
 
 type edgeT struct {
@@ -179,6 +179,7 @@ func initialize() {
 	updateWorkerIDs()
 	dataset = sdfs.GetGraphInput(datasetFilename)
 	updateVertex()
+	time.Sleep(time.Second)
 	computeAllVertex()
 }
 
@@ -196,7 +197,6 @@ func computeAllVertex() {
 			info.active = info.Compute(mq)
 			vertices[key] = info
 		}
-		time.Sleep(time.Second)
 		allHalt := true
 		for _, info := range vertices {
 			if info.active {

@@ -314,6 +314,9 @@ func getAllResults() {
 	// 	fmt.Println(*elem)
 	// }
 	for idx := 0; idx < 25; idx++ {
+		if finalRes.Len() <= 0 {
+			break
+		}
 		elem := heap.Pop(finalRes).(*superstep.Vertex)
 		fmt.Println(elem)
 	}

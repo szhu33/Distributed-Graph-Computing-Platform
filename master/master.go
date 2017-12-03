@@ -298,8 +298,10 @@ func getAllResults() {
 		sendCount--
 		finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
-		fmt.Println("the result is: ", res.GetVertices())
 
+	}
+	for _, v := range finalRes {
+		fmt.Println(*v)
 	}
 }
 func allVoteToHalt() bool {

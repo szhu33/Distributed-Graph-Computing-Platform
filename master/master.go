@@ -317,6 +317,7 @@ func listenWorker() {
 
 		proto.Unmarshal(buf, &pb)
 		if !isStandBy {
+			fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
 			workerRes <- pb
 		} else {
 			if int(pb.GetStepcount()) == stepcount {
@@ -351,7 +352,7 @@ COMPUTE:
 				{
 					sendCount--
 					// update workerInfos
-					fmt.Printf("received ACK form worker: %d, command is %s\n", res.GetSource(), res.GetCommand())
+					fmt.Printf("sendcount-- now is %d\n", sendCount)
 					if res.GetStepcount() == uint64(stepcount) {
 						workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
 					}

@@ -107,6 +107,9 @@ func updateVertex() {
 
 		// hash vertexID to vmID, if the vmID is not the worker, increment vertexID and hash it again until it is a valid worker
 		from1, err := strconv.ParseInt(words[0], 10, 32)
+		if err != nil {
+			fmt.Println("Error when parsing Int!", err.Error())
+		}
 		from := int(from1)
 		dummyFromInt := from
 		fromVM := int(util.HashToVMIdx(string(dummyFromInt)))
@@ -140,7 +143,8 @@ func updateVertex() {
 				vpr := VertexPageRank{Id: from, Value: 1}
 				vertices[from] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
 			}
-		} else {
+		}
+		if toVM == myID {
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})

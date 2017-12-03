@@ -184,7 +184,6 @@ func computeAllVertex() {
 				continue
 			}
 			var mq = &vertexMsgQ{queue: info.msgQueue, index: 0}
-
 			info.active = info.Compute(mq)
 			vertices[key] = info
 		}
@@ -212,7 +211,6 @@ func computeAllVertex() {
 			info.msgQueue = info.nextMsgQueue
 			info.nextMsgQueue = make([]*workerpb.Worker, 0)
 			vertices[key] = info
-			fmt.Println(vertices[key])
 		}
 	}
 

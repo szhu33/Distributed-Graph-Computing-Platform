@@ -53,6 +53,7 @@ type vertexMsgQ struct {
 }
 
 func (q *vertexMsgQ) Next() (interface{}, bool) {
+	fmt.Println("index:", q.index, "len:", len(q.queue))
 	if (q.index + 1) >= len(q.queue) {
 		return 0.0, true
 	}
@@ -66,7 +67,6 @@ func (q *vertexMsgQ) Next() (interface{}, bool) {
 		return val, true
 	}
 	return val, false
-
 }
 
 // GetValue returns value of the vertex

@@ -217,14 +217,15 @@ func computeAllVertex() {
 }
 
 func returnResults() {
-	ret := make([]ssproto.Vertex, 0)
+	ret := make([]*ssproto.Vertex, 0)
 	for _, info := range vertices {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()
 		newV.Id = uint64(info.VertexPageRank.Id)
-		ret = append(ret, newV)
+		ret = append(ret, &newV)
 	}
 	newMsg := &ssproto.Superstep{Source: uint32(myID)}
+	newMsg.Vertices = ret
 	pb, err := proto.Marshal(newMsg)
 	if err != nil {
 		fmt.Println("Unmarshall: error occured!", err.Error())

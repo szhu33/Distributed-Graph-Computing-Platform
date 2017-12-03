@@ -188,6 +188,7 @@ func updateVertex() {
 		}
 	}
 	fmt.Println("# Lines:", lines)
+	fmt.Println("# Vertices:", NumVertices())
 	// fmt.Println("Vertices len:", len(vertices))
 	// fmt.Println()
 	// for key, val := range vertices {

@@ -23,6 +23,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		sum := 0.0
 		for {
 			val, isEnd := msgs.Next()
+			fmt.Println("isEnd:", isEnd)
 			if isEnd {
 				break
 			}

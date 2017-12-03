@@ -5,5 +5,5 @@ message Worker {
     uint64 fromVertex = 1; // sender ID
     uint64 stepcount = 2;
     uint64 toVertex= 3;
-    bytes msgValue = 4;
+    double msgValue = 4;
 }

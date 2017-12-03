@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"cs425_mp4/api"
 	"cs425_mp4/protocol-buffer/worker-worker"
-	"encoding/gob"
 	"fmt"
 )
 
@@ -30,7 +28,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 			if isEnd {
 				break
 			}
-			sum += val.(float64)
+			sum += val
 		}
 		newVal := 0.15/float64(NumVertices()) + 0.85*sum
 		v.MutableValue(newVal)
@@ -57,20 +55,14 @@ type vertexMsgQ struct {
 	index int
 }
 
-func (q *vertexMsgQ) Next() (interface{}, bool) {
+func (q *vertexMsgQ) Next() (float64, bool) {
 	fmt.Println("index:", q.index, "len:", len(q.queue))
 	if q.index >= len(q.queue) {
 		return 0.0, true
 	}
-	rd := bytes.NewReader(q.queue[q.index].GetMsgValue())
-	dec := gob.NewDecoder(rd)
 	q.index++
-	var val float64
-	err := dec.Decode(&val)
-	if err != nil {
-		fmt.Println("decode error:", err.Error())
-		return val, true
-	}
+	val := q.queue[q.index].GetMsgValue()
+
 	return val, false
 }
 
@@ -101,18 +93,13 @@ func (v VertexPageRank) VoteToHalt() bool {
 }
 
 func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b) // write to buffer b
 
 	original, ok := msgV.(float64)
 	if ok {
-		err := enc.Encode(original)
-		if err != nil {
-			fmt.Println("Cannot encode msg value when sending msg")
-			return
-		}
-		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.Id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: b.Bytes()}
+		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.Id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: original}
 		sendToWorker(newWorkerMsg)
+	} else {
+		fmt.Println("Failed to convert to float.")
 	}
 
 }

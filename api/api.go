@@ -2,7 +2,7 @@ package api
 
 // MessageIterator defins a iterator
 type MessageIterator interface {
-	Next() (interface{}, bool)
+	Next() (float64, bool)
 }
 
 // Vertex defines functions needed for Vertex class

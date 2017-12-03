@@ -29,8 +29,9 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 			}
 			sum += val.(float64)
 		}
-		v.MutableValue(0.15/float64(NumVertices()) + 0.85*sum)
-		fmt.Println(v.Value)
+		newVal := 0.15/float64(NumVertices()) + 0.85*sum
+		v.MutableValue(newVal)
+		fmt.Println("superstep", stepcount, "sum:", sum, "newVal:", newVal, "numVertices:", NumVertices())
 	}
 
 	if v.Superstep() < 30 {
@@ -38,6 +39,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		n := float64(len(neighbors))
 		for _, edge := range neighbors {
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
+			fmt.Println("superstep", stepcount, "Send to:", edge.dest, "val:", v.GetValue()/n)
 		}
 	} else {
 		fmt.Println("Halt vertex:", v.Vertex_id())

@@ -144,6 +144,7 @@ func updateVertex() {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
 				vpr := VertexPageRank{Id: from, Value: 1}
+				fmt.Println(vpr)
 				vertices[from] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
 			}
 		}
@@ -156,6 +157,7 @@ func updateVertex() {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
 				vpr := VertexPageRank{Id: to, Value: 1}
+				fmt.Println(vpr)
 				vertices[to] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
 			}
 		}

@@ -17,14 +17,11 @@ type VertexPageRank struct {
 // Compute is the client implementation
 // return the active status of the vertex
 func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
-	if v.Superstep() == 0 {
-		fmt.Println("stepcount0!")
-	}
 	if v.Superstep() >= 1 {
 		sum := 0.0
 		for {
 			val, isEnd := msgs.Next()
-			fmt.Println("stepcount:", stepcount, "Msg vertexID: ", v.Id, "Msg val:", val)
+			// fmt.Println("stepcount:", stepcount, "Msg vertexID: ", v.Id, "Msg val:", val)
 			if isEnd {
 				break
 			}
@@ -32,19 +29,16 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		}
 		newVal := 0.15/float64(NumVertices()) + 0.85*sum
 		v.MutableValue(newVal)
-		fmt.Println("superstep", stepcount, "vertex:", v.Vertex_id(), "sum:", sum, "newVal:", newVal, "numVertices:", NumVertices())
+		// fmt.Println("superstep", stepcount, "vertex:", v.Vertex_id(), "sum:", sum, "newVal:", newVal, "numVertices:", NumVertices())
 	}
 
 	if v.Superstep() < 30 {
 		neighbors := v.GetOutEdge()
 		n := float64(len(neighbors))
-		fmt.Println("neighbor nums", n)
+		// fmt.Println("neighbor nums", n)
 		for _, edge := range neighbors {
-			if v.Superstep() == 0 {
-				fmt.Println("send out msg when stepcount ==0")
-			}
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
-			fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
+			// fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
 		}
 	} else {
 		fmt.Println("Halt vertex:", v.Vertex_id())

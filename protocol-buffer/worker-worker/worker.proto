@@ -7,3 +7,7 @@ message Worker {
     uint64 toVertex= 3;
     double msgValue = 4;
 }
+
+message WorkerTotal{
+    repeated Worker vertices = 1;
+}

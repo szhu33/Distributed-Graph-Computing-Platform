@@ -64,6 +64,8 @@ var (
 
 	msgQMutex   = &sync.Mutex{}
 	activeMutex = &sync.Mutex{}
+
+	combinerMsg map[int]*workerpb.WorkerTotal
 )
 
 /* failure handling function */
@@ -210,6 +212,7 @@ func computeAllVertex() {
 	fmt.Println("vertices on entering computeAllvertex:", len(vertices))
 
 	for {
+		combinerMsg = make(map[int]*workerpb.WorkerTotal)
 		for key := range vertices {
 			info := vertices[key]
 			if !active[key] {
@@ -221,6 +224,24 @@ func computeAllVertex() {
 			activeMutex.Unlock()
 			vertices[key] = info
 		}
+
+		for key, value := range combinerMsg {
+			go func(key int, value *workerpb.WorkerTotal) {
+				pb, err := proto.Marshal(value)
+				if err != nil {
+					fmt.Println("Error when marshal worker-worker message.", err.Error())
+					return
+				}
+				conn, err := net.Dial("tcp", util.HostnameStr(key+1, workerPort))
+				if err != nil {
+					fmt.Println("Dial to worker failed!", err.Error())
+					return
+				}
+				defer conn.Close()
+				conn.Write(pb)
+			}(key, value)
+		}
+
 		allHalt := true
 		for key := range vertices {
 			if active[key] {
@@ -314,18 +335,17 @@ func sendToWorker(msgpb *workerpb.Worker) {
 		msgQMutex.Unlock()
 	} else {
 		// Send to other worker
-		pb, err := proto.Marshal(msgpb)
-		if err != nil {
-			fmt.Println("Error when marshal worker-worker message.", err.Error())
-			return
+		if _, ok := combinerMsg[dest]; ok {
+			temp := combinerMsg[dest]
+			temp.Vertices = append(temp.Vertices, msgpb)
+			combinerMsg[dest] = temp
+		} else {
+			newWorkTotal := workerpb.WorkerTotal{}
+			newVertices := make([]*workerpb.Worker, 0)
+			newVertices = append(newVertices, msgpb)
+			newWorkTotal.Vertices = newVertices
+			combinerMsg[dest] = &newWorkTotal
 		}
-		conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
-		if err != nil {
-			fmt.Println("Dial to worker failed!", err.Error())
-			return
-		}
-		defer conn.Close()
-		conn.Write(pb)
 	}
 }
 
@@ -404,22 +424,24 @@ func listenWorker() {
 				return
 			}
 
-			newWorkerMsg := &workerpb.Worker{}
+			newWorkerMsg := &workerpb.WorkerTotal{}
 			err1 := proto.Unmarshal(buf.Bytes(), newWorkerMsg)
 			if err1 != nil {
 				fmt.Println("listenWorker: Error unmarshall.", err.Error())
 				return
 			}
-			// fmt.Println(newWorkerMsg)
-			toVertexID := int(newWorkerMsg.GetToVertex())
-			msgQMutex.Lock()
-			tempQ := nextMsgQueue[toVertexID]
-			tempQ = append(tempQ, newWorkerMsg)
-			nextMsgQueue[toVertexID] = tempQ
-			msgQMutex.Unlock()
-			activeMutex.Lock()
-			active[toVertexID] = true
-			activeMutex.Unlock()
+			fmt.Println(newWorkerMsg)
+			for _, value := range newWorkerMsg.Vertices {
+				toVertexID := int(value.GetToVertex())
+				msgQMutex.Lock()
+				tempQ := nextMsgQueue[toVertexID]
+				tempQ = append(tempQ, value)
+				nextMsgQueue[toVertexID] = tempQ
+				msgQMutex.Unlock()
+				activeMutex.Lock()
+				active[toVertexID] = true
+				activeMutex.Unlock()
+			}
 		}(conn)
 	}
 }

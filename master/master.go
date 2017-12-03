@@ -51,6 +51,7 @@ var (
 	finalRes      *maxheap.VertexHeap
 	isStandBy     bool
 	standbyCount  int
+	appName       string
 )
 
 /* failre handling function */
@@ -203,6 +204,7 @@ func listenClient() {
 
 	proto.Unmarshal(buf.Bytes(), &clientRequest)
 	clientID = int(clientRequest.GetClientID())
+	appName = clientRequest.GetApplication()
 	fmt.Printf("unmarshal new meassge, client id: %d\n", clientRequest.GetClientID())
 
 	// if not standby, need to send request to clientID to standbyMaster through clientPort
@@ -256,6 +258,7 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 	msg := &superstep.Superstep{Source: uint32(myID)}
 	msg.Command = command
 	msg.Stepcount = uint64(stepcount)
+	msg.Application = appName
 	if command == START {
 		msg.DatasetFilename = datasetName
 	}
@@ -379,7 +382,7 @@ COMPUTE:
 		// send standby master the stepcount
 		go sendStandbyStepcount()
 		// send worker to run next step
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		for key := range workerInfos {
 			cmd := RUN
 			if stepcount == 0 {

@@ -13,7 +13,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -414,11 +413,8 @@ func main() {
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	masterID = 9
-	go listenMaster()
 	go listenWorker()
-	for {
-		time.Sleep(time.Second)
-	}
+	listenMaster()
 }
 
 // NumVertices returns the number of vertices in the graph

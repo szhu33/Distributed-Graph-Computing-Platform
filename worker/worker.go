@@ -285,12 +285,13 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 }
 
 func sendToWorker(msgpb *workerpb.Worker) {
-	dest := idToVM[int(msgpb.GetToVertex())]
+	toVertexID := int(msgpb.GetToVertex())
+	dest := idToVM[toVertexID]
 	if dest == myID {
 		// Insert to local queue
 		temp := vertices[dest]
 		temp.nextMsgQueue = append(temp.nextMsgQueue, msgpb)
-		vertices[dest] = temp
+		vertices[toVertexID] = temp
 	} else {
 		// Send to other worker
 		pb, err := proto.Marshal(msgpb)

@@ -54,7 +54,7 @@ type vertexMsgQ struct {
 
 func (q *vertexMsgQ) Next() (interface{}, bool) {
 	fmt.Println("index:", q.index, "len:", len(q.queue))
-	if (q.index + 1) >= len(q.queue) {
+	if q.index >= len(q.queue) {
 		return 0.0, true
 	}
 	rd := bytes.NewReader(q.queue[q.index].GetMsgValue())

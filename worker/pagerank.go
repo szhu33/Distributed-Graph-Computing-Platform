@@ -31,12 +31,14 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
 		}
 	}
 
-	if v.Superstep() >= 30 {
+	if v.Superstep() < 30 {
 		neighbors := v.GetOutEdge()
 		n := float64(len(neighbors))
 		for _, edge := range neighbors {
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
 		}
+	} else {
+		v.VoteToHalt()
 	}
 }
 

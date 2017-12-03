@@ -248,7 +248,7 @@ func returnResults() {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()
 		newV.Id = uint64(info.VertexPageRank.Id)
-		fmt.Println("key in vertices: ",key "in VertexPageRank",newV)
+		fmt.Println("key in vertices: ", key, "in VertexPageRank", newV)
 		ret = append(ret, &newV)
 	}
 	newMsg := &ssproto.Superstep{Source: uint32(myID)}

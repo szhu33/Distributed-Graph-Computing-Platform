@@ -158,15 +158,14 @@ func standbyUp() {
 
 		for sendCount != 0 {
 			res := <-workerRes
-
 			sendCount--
 			// update workerInfos
 			if res.GetStepcount() == uint64(stepcount) {
 				workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
 			}
 		}
+		stepcount++
 	}
-	stepcount++
 }
 
 // upload dataset into sdfs TODO: implement this function
@@ -276,6 +275,7 @@ func initialize() {
 	stepcount = 0
 	workerRes = make(chan superstep.Superstep)
 	workerInfos = make(map[uint32]workerStepState)
+	finalRes = make([]byte, 0)
 	membersStatus := fd.MemberStatus()
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
@@ -380,6 +380,20 @@ COMPUTE:
 		}
 		stepcount++
 		fmt.Println("stepcount ++, now is", stepcount)
+	}
+	// send all workers ACK to stop computing
+	for key := range workerInfos {
+		cmd := ACK
+		go sendMsgToWorker(key, cmd)
+		sendCount++
+	}
+	for sendCount != 0 {
+		res := <-workerRes
+		sendCount--
+
+		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
+		fmt.Println("the result is: ", res.GetResult())
+		err := append(finalRes, res.GetResult())
 	}
 }
 

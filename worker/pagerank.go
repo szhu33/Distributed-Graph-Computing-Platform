@@ -38,6 +38,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
 		}
 	} else {
+		fmt.Println("Halt vertex:", v.Vertex_id())
 		v.VoteToHalt()
 	}
 }
@@ -50,7 +51,7 @@ type vertexMsgQ struct {
 
 func (q vertexMsgQ) Next() (interface{}, bool) {
 	if (q.index + 1) >= len(q.queue) {
-		return 0, true
+		return 0.0, true
 	}
 	rd := bytes.NewReader(q.queue[q.index].GetMsgValue())
 	dec := gob.NewDecoder(rd)

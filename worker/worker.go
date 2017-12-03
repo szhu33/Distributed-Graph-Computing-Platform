@@ -177,9 +177,11 @@ func initialize() {
 /* worker related function */
 func computeAllVertex() {
 	for {
-		for _, info := range vertices {
+		for key := range vertices {
+			info := vertices[key]
 			var mq = vertexMsgQ{queue: info.msgQueue, index: 0}
 			info.Compute(mq)
+			vertices[key] = info
 		}
 
 		allHalt := true
@@ -199,6 +201,12 @@ func computeAllVertex() {
 			return
 		}
 		stepcount = nextCmd.GetStepcount()
+		for key := range vertices {
+			info := vertices[key]
+			info.msgQueue = info.nextMsgQueue
+			info.nextMsgQueue = make([]*workerpb.Worker, 0)
+			vertices[key] = info
+		}
 	}
 
 }

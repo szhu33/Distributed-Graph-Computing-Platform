@@ -87,7 +87,7 @@ func sendStandbyStepcount() {
 
 	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID+1, standbyPort))
 	if err != nil {
-		fmt.Printf("error has occured! %s\n", err)
+		fmt.Printf("sendStandbyStepcount: error has occured! %s\n", err)
 		return
 	}
 	defer conn.Close()
@@ -218,7 +218,7 @@ func listenClient() {
 		conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, standbyID+1, clientPort))
 		//conn, err := net.Dial("tcp", "localhost"+clientPort)
 		if err != nil {
-			fmt.Printf("error has occured! %s\n", err)
+			fmt.Printf("listenClient: error has occured! %s\n", err)
 			return
 		}
 		defer conn.Close()
@@ -240,7 +240,7 @@ func sendClientRes() {
 	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, clientID+1, clientPort))
 	//conn, err := net.Dial("tcp", "localhost"+clientPort)
 	if err != nil {
-		fmt.Printf("error has occured! %s\n", err)
+		fmt.Printf("sendClientRes: error has occured! %s\n", err)
 		return
 	}
 	defer conn.Close()
@@ -265,7 +265,7 @@ func sendMsgToWorker(destID uint32, command superstep.Superstep_Command) {
 
 	conn, err := net.Dial("tcp", fmt.Sprintf(nodeName, destID+1, masterworkerPort))
 	if err != nil {
-		fmt.Printf("error has occured! %s\n", err)
+		fmt.Printf("sendMsgToWorker: error has occured! %s\n", err)
 		return
 	}
 	defer conn.Close()

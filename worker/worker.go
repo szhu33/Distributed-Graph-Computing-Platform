@@ -221,7 +221,15 @@ func computeAllVertex() {
 }
 
 func returnResults() {
+
 	ret := make([]*ssproto.Vertex, 0)
+
+	fmt.Println("After computation:")
+	fmt.Println(len(vertices))
+	for key, val := range vertices {
+		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
+	}
+
 	for _, info := range vertices {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()

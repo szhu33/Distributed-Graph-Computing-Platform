@@ -233,7 +233,7 @@ func listenClient() {
 func sendClientRes() {
 	msg := &masterclient.MasterClient{ClientID: uint32(clientID)}
 	msg.Application = app
-	msg.Result = finalRes
+	// msg.Result = finalRes
 
 	pb, err := proto.Marshal(msg)
 	if err != nil {

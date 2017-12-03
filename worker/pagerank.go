@@ -38,7 +38,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		// fmt.Println("neighbor nums", n)
 		for _, edge := range neighbors {
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
-			// fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
+			fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
 		}
 	} else {
 		fmt.Println("Halt vertex:", v.Vertex_id())

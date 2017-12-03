@@ -134,11 +134,11 @@ func updateVertex() {
 		}
 		if fromVM == myID {
 			if _, ok := vertices[from]; ok {
-				if from == 12 || from == 200 {
-					fmt.Println("WARNING !!!! ", vertices[from].VertexPageRank)
-				}
 				tempInfo := vertices[from]
-				fmt.Println("however 5555555")
+				fmt.Println("however from ! 5555555")
+				tempInfo.VertexPageRank.Value = 1
+				tempInfo.VertexPageRank.Id = from
+				tempInfo.active = true
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
 				vertices[from] = tempInfo
 			} else {
@@ -152,6 +152,10 @@ func updateVertex() {
 		if toVM == myID {
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
+				fmt.Println("however to 5555555")
+				tempInfo.VertexPageRank.Value = 1
+				tempInfo.VertexPageRank.Id = to
+				tempInfo.active = true
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})
 				vertices[to] = tempInfo
 			} else {

@@ -226,6 +226,10 @@ func returnResults() {
 	}
 	newMsg := &ssproto.Superstep{Source: uint32(myID)}
 	newMsg.Vertices = ret
+	fmt.Println("my result:")
+	for _, elem := range ret {
+		fmt.Println(*elem)
+	}
 	pb, err := proto.Marshal(newMsg)
 	if err != nil {
 		fmt.Println("Unmarshall: error occured!", err.Error())

@@ -379,6 +379,7 @@ COMPUTE:
 		// send standby master the stepcount
 		go sendStandbyStepcount()
 		// send worker to run next step
+		time.Sleep(50 * time.Millisecond)
 		for key := range workerInfos {
 			cmd := RUN
 			if stepcount == 0 {

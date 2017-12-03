@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -143,7 +144,7 @@ func updateVertex() {
 			active[from] = true
 			if _, ok := vertices[from]; ok {
 				tempInfo := vertices[from]
-				tempInfo.VertexPageRank.Value = 0
+				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = from
 				vertices[from] = tempInfo
 				tempN := neighborMap[from]
@@ -152,7 +153,7 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
-				vpr := VertexPageRank{Id: from, Value: 0}
+				vpr := VertexPageRank{Id: from, Value: 1}
 				vertices[from] = vertexInfo{VertexPageRank: vpr}
 				neighborMap[from] = nei
 				msgQueue[from] = make([]*workerpb.Worker, 0)
@@ -163,7 +164,7 @@ func updateVertex() {
 			active[to] = true
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
-				tempInfo.VertexPageRank.Value = 0
+				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = to
 				tempN := neighborMap[to]
 				tempN = append(tempN, edgeT{dest: from, value: 1})
@@ -172,7 +173,7 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
-				vpr := VertexPageRank{Id: to, Value: 0}
+				vpr := VertexPageRank{Id: to, Value: 1}
 				vertices[to] = vertexInfo{VertexPageRank: vpr}
 				neighborMap[to] = nei
 				msgQueue[to] = make([]*workerpb.Worker, 0)
@@ -260,6 +261,7 @@ func computeAllVertex() {
 			returnResults()
 			return
 		}
+		time.Sleep(50 * time.Millisecond)
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
 			info := vertices[key]

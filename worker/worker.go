@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -260,12 +261,13 @@ func computeAllVertex() {
 			returnResults()
 			return
 		}
+		time.Sleep(50 * time.Millisecond)
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
-			info := vertices[key]
+			msgQMutex.Lock()
 			msgQueue[key] = nextMsgQueue[key]
 			nextMsgQueue[key] = make([]*workerpb.Worker, 0)
-			vertices[key] = info
+			msgQMutex.Unlock()
 		}
 	}
 

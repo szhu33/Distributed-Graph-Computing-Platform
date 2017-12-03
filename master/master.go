@@ -244,7 +244,7 @@ func sendClientRes() {
 	}
 	defer conn.Close()
 	conn.Write(pb)
-
+	getAllResults()
 }
 
 /* worker related function */
@@ -285,6 +285,23 @@ func initialize() {
 	}
 }
 
+func getAllResults() {
+	// send all workers ACK to stop computing
+	sendCount := 0
+	for key := range workerInfos {
+		cmd := ACK
+		go sendMsgToWorker(key, cmd)
+		sendCount++
+	}
+	for sendCount != 0 {
+		res := <-workerRes
+		sendCount--
+
+		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
+		fmt.Println("the result is: ", res.GetResult())
+		err := append(finalRes, res.GetResult())
+	}
+}
 func allVoteToHalt() bool {
 	for _, value := range workerInfos {
 		if value.state != VOTETOHALT {
@@ -381,20 +398,7 @@ COMPUTE:
 		stepcount++
 		fmt.Println("stepcount ++, now is", stepcount)
 	}
-	// send all workers ACK to stop computing
-	for key := range workerInfos {
-		cmd := ACK
-		go sendMsgToWorker(key, cmd)
-		sendCount++
-	}
-	for sendCount != 0 {
-		res := <-workerRes
-		sendCount--
-
-		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
-		fmt.Println("the result is: ", res.GetResult())
-		err := append(finalRes, res.GetResult())
-	}
+	getAllResults()
 }
 
 func main() {
@@ -418,7 +422,6 @@ func main() {
 			standbyWait()
 		}
 
-		finalRes = []byte("yes")
 		sendClientRes()
 	}
 }

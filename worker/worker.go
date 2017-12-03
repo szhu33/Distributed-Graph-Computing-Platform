@@ -203,6 +203,7 @@ func computeAllVertex() {
 		nextCmd := <-computeChan
 		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {
 			fmt.Println(nextCmd.GetCommand().String())
+			returnResults()
 			return
 		}
 		stepcount = nextCmd.GetStepcount()
@@ -214,6 +215,28 @@ func computeAllVertex() {
 		}
 	}
 
+}
+
+func returnResults() {
+	ret := make([]ssproto.Vertex, 0)
+	for _, info := range vertices {
+		newV := ssproto.Vertex{}
+		newV.Value = info.VertexPageRank.GetValue()
+		newV.Id = uint64(info.VertexPageRank.Id)
+		ret = append(ret, newV)
+	}
+	newMsg := &ssproto.Superstep{Source: uint32(myID)}
+	pb, err := proto.Marshal(newMsg)
+	if err != nil {
+		fmt.Println("Unmarshall: error occured!", err.Error())
+		return
+	}
+	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID+1), masterworkerPort))
+	if err != nil {
+		fmt.Println("Send result: Dial to master failed!", err.Error())
+	}
+	defer conn.Close()
+	conn.Write(pb)
 }
 
 func sendToMaster(cmd ssproto.Superstep_Command) {

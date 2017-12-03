@@ -46,7 +46,7 @@ var (
 	masterFailure chan bool
 	clientRequest masterclient.MasterClient
 	app           string
-	finalRes      []byte
+	finalRes      []*superstep.Vertex
 	isStandBy     bool
 	standbyCount  int
 )
@@ -228,7 +228,7 @@ func listenClient() {
 func sendClientRes() {
 	msg := &masterclient.MasterClient{ClientID: uint32(clientID)}
 	msg.Application = app
-	msg.Result = finalRes
+	// msg.Result = finalRes
 
 	pb, err := proto.Marshal(msg)
 	if err != nil {
@@ -275,7 +275,7 @@ func initialize() {
 	stepcount = 0
 	workerRes = make(chan superstep.Superstep)
 	workerInfos = make(map[uint32]workerStepState)
-	finalRes = make([]byte, 0)
+	finalRes = make([]*superstep.Vertex, 0)
 	membersStatus := fd.MemberStatus()
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
@@ -296,10 +296,10 @@ func getAllResults() {
 	for sendCount != 0 {
 		res := <-workerRes
 		sendCount--
-
+		finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
-		fmt.Println("the result is: ", res.GetResult())
-		err := append(finalRes, res.GetResult())
+		fmt.Println("the result is: ", res.GetVertices())
+
 	}
 }
 func allVoteToHalt() bool {
@@ -320,7 +320,8 @@ func listenWorker() {
 	defer ln.Close()
 
 	for {
-		buf := make([]byte, (4 + 8 + 8))
+		var buf bytes.Buffer
+
 		var pb superstep.Superstep
 
 		conn, err := ln.Accept()
@@ -329,14 +330,13 @@ func listenWorker() {
 			return
 		}
 		defer conn.Close()
-
-		_, err = conn.Read(buf)
+		_, err = io.Copy(&buf, conn)
 		if err != nil {
 			fmt.Println("error occured!")
 			return
 		}
 
-		proto.Unmarshal(buf, &pb)
+		proto.Unmarshal(buf.Bytes(), &pb)
 		if !isStandBy {
 			fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
 			workerRes <- pb

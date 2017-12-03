@@ -181,6 +181,11 @@ func initialize() {
 
 /* worker related function */
 func computeAllVertex() {
+	fmt.Println("vertices on entering computeAllvertex:", len(vertices))
+	for key, val := range vertices {
+		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
+	}
+
 	for {
 		for key := range vertices {
 			if key == 0 {

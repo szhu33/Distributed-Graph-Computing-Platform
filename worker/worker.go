@@ -35,7 +35,6 @@ const (
 type vertexInfo struct {
 	active       bool
 	neighbors    []edgeT
-	value        float64
 	msgQueue     []*workerpb.Worker
 	nextMsgQueue []*workerpb.Worker
 
@@ -183,7 +182,8 @@ func computeAllVertex() {
 				continue
 			}
 			var mq = vertexMsgQ{queue: info.msgQueue, index: 0}
-			info.Compute(mq)
+
+			info.active = info.Compute(mq)
 			vertices[key] = info
 		}
 

@@ -17,7 +17,8 @@ type VertexPageRank struct {
 }
 
 // Compute is the client implementation
-func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
+// return the active status of the vertex
+func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 	if v.Superstep() >= 1 {
 		sum := 0.0
 		for {
@@ -39,8 +40,9 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
 		}
 	} else {
 		fmt.Println("Halt vertex:", v.Vertex_id())
-		v.VoteToHalt()
+		return v.VoteToHalt()
 	}
+	return true
 }
 
 /* Actual implementation in worker*/
@@ -86,11 +88,9 @@ func (v VertexPageRank) Vertex_id() int {
 }
 
 // VoteToHalt halt the vertex
-func (v VertexPageRank) VoteToHalt() {
+func (v VertexPageRank) VoteToHalt() bool {
 	// send halt message to master
-	temp := vertices[v.id]
-	temp.active = false
-	vertices[v.id] = temp
+	return false
 }
 
 func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {

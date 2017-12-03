@@ -13,6 +13,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -59,6 +60,8 @@ var (
 	neighborMap     map[int][]edgeT
 	appName         string
 	SSSP_source     int
+
+	mutex = &sync.Mutex{}
 )
 
 /* failure handling function */
@@ -301,9 +304,11 @@ func sendToWorker(msgpb *workerpb.Worker) {
 	dest := idToVM[toVertexID]
 	if dest == myID {
 		// Insert to local queue
+		mutex.Lock()
 		temp := nextMsgQueue[toVertexID]
 		temp = append(temp, msgpb)
 		nextMsgQueue[toVertexID] = temp
+		mutex.Unlock()
 	} else {
 		// Send to other worker
 		pb, err := proto.Marshal(msgpb)
@@ -394,9 +399,11 @@ func listenWorker() {
 		}
 		fmt.Println(newWorkerMsg)
 		toVertexID := int(newWorkerMsg.GetToVertex())
+		mutex.Lock()
 		tempQ := nextMsgQueue[toVertexID]
 		tempQ = append(tempQ, newWorkerMsg)
 		nextMsgQueue[toVertexID] = tempQ
+		mutex.Unlock()
 		active[toVertexID] = true
 	}
 }

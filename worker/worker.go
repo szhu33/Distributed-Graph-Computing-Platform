@@ -139,7 +139,6 @@ func updateVertex() {
 			active[from] = true
 			if _, ok := vertices[from]; ok {
 				tempInfo := vertices[from]
-				fmt.Println("however from ! 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = from
 				vertices[from] = tempInfo
@@ -151,7 +150,6 @@ func updateVertex() {
 				nei = append(nei, edgeT{dest: to, value: 1})
 				vpr := VertexPageRank{Id: from, Value: 1}
 				vertices[from] = vertexInfo{VertexPageRank: vpr}
-				fmt.Println(vpr)
 				neighborMap[from] = nei
 				msgQueue[from] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[from] = make([]*workerpb.Worker, 0)
@@ -161,7 +159,6 @@ func updateVertex() {
 			active[to] = true
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
-				fmt.Println("however to 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = to
 				tempN := neighborMap[to]
@@ -173,19 +170,18 @@ func updateVertex() {
 				nei = append(nei, edgeT{dest: from, value: 1})
 				vpr := VertexPageRank{Id: to, Value: 1}
 				vertices[to] = vertexInfo{VertexPageRank: vpr}
-				fmt.Println(vpr)
 				neighborMap[to] = nei
 				msgQueue[to] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[to] = make([]*workerpb.Worker, 0)
 			}
 		}
 	}
-	fmt.Println("Vertices result")
-	fmt.Println(len(vertices))
-	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val)
-	}
-	fmt.Println(idToVM)
+	// fmt.Println("Vertices len:", len(vertices))
+	// fmt.Println()
+	// for key, val := range vertices {
+	// 	fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val)
+	// }
+	// fmt.Println(idToVM)
 }
 
 func initialize() {
@@ -251,26 +247,26 @@ func computeAllVertex() {
 func returnResults() {
 
 	ret := make([]*ssproto.Vertex, 0)
-
-	fmt.Println("After computation:")
-	fmt.Println(len(vertices))
-	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val.VertexPageRank)
-	}
+	//
+	// fmt.Println("After computation:")
+	// fmt.Println(len(vertices))
+	// for key, val := range vertices {
+	// 	fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val.VertexPageRank)
+	// }
 
 	for key, info := range vertices {
 		newV := ssproto.Vertex{}
 		newV.Value = info.VertexPageRank.GetValue()
 		newV.Id = uint64(key)
-		fmt.Println("key in vertices: ", key, "in VertexPageRank", newV)
+		// fmt.Println("key in vertices: ", key, "in VertexPageRank", newV)
 		ret = append(ret, &newV)
 	}
 	newMsg := &ssproto.Superstep{Source: uint32(myID)}
 	newMsg.Vertices = ret
-	fmt.Println("my result:")
-	for _, elem := range ret {
-		fmt.Println(*elem)
-	}
+	// fmt.Println("my result:")
+	// for _, elem := range ret {
+	// 	fmt.Println(*elem)
+	// }
 	pb, err := proto.Marshal(newMsg)
 	if err != nil {
 		fmt.Println("Unmarshall: error occured!", err.Error())
@@ -279,6 +275,7 @@ func returnResults() {
 	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID+1), masterworkerPort))
 	if err != nil {
 		fmt.Println("Send result: Dial to master failed!", err.Error())
+		return
 	}
 	defer conn.Close()
 	conn.Write(pb)
@@ -314,6 +311,7 @@ func sendToWorker(msgpb *workerpb.Worker) {
 		pb, err := proto.Marshal(msgpb)
 		if err != nil {
 			fmt.Println("Error when marshal worker-worker message.", err.Error())
+			return
 		}
 		conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
 		if err != nil {
@@ -351,7 +349,7 @@ func listenMaster() {
 		}
 
 		proto.Unmarshal(buf.Bytes(), &masterMsg)
-		fmt.Println(masterMsg)
+		// fmt.Println(masterMsg)
 		if masterMsg.GetSource() != masterID {
 			masterID = masterMsg.GetSource()
 		}
@@ -397,8 +395,9 @@ func listenWorker() {
 		err1 := proto.Unmarshal(buf.Bytes(), newWorkerMsg)
 		if err1 != nil {
 			fmt.Println("listenWorker: Error unmarshall.", err.Error())
+			continue
 		}
-		fmt.Println(newWorkerMsg)
+		// fmt.Println(newWorkerMsg)
 		toVertexID := int(newWorkerMsg.GetToVertex())
 		mutex.Lock()
 		tempQ := nextMsgQueue[toVertexID]

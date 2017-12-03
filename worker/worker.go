@@ -210,7 +210,7 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 		fmt.Println("Error when marshal halt message.", err.Error())
 	}
 
-	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID), masterworkerPort))
+	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID+1), masterworkerPort))
 	if err != nil {
 		fmt.Println("Dial to master failed!", err.Error())
 	}

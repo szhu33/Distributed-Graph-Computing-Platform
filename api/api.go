@@ -1,13 +1,11 @@
 package api
 
-type VertexValue interface{}
-type EdgeValue interface{}
-type MessageValue interface{}
-
+// MessageIterator defins a iterator
 type MessageIterator interface {
-	Next() (MessageValue, bool)
+	Next() (interface{}, bool)
 }
 
+// Vertex defines functions needed for Vertex class
 type Vertex interface {
 
 	// Compute is defined by user application
@@ -16,17 +14,9 @@ type Vertex interface {
 	Vertex_id() int
 	Superstep() int
 
-	GetValue() VertexValue
-	MutableValue() *VertexValue
-	GetOutEdgeIterator()
+	GetValue() interface{}
+	MutableValue()
 
 	SendMessageTo()
 	VoteToHalt()
-}
-
-type VertexReal struct {
-	id  int
-	val VertexValue
-
-	neighbors map[int]EdgeValue
 }

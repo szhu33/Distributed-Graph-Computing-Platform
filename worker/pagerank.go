@@ -6,8 +6,6 @@ import (
 	"cs425_mp4/protocol-buffer/worker-worker"
 	"encoding/gob"
 	"fmt"
-
-	"github.com/golang/protobuf/proto"
 )
 
 // VertexPageRank is actual implementation of vertex in PageRank
@@ -20,19 +18,49 @@ type VertexPageRank struct {
 
 // Compute is the client implementation
 func (v *VertexPageRank) Compute(msgs api.MessageIterator) {
-	for {
-		currVal := v.GetValue()
-		val, isEnd := msgs.Next()
-		if isEnd {
-			v.VoteToHalt()
-			break
+	if v.Superstep() >= 1 {
+		sum := 0.0
+		for {
+			val, isEnd := msgs.Next()
+			if isEnd {
+				v.VoteToHalt()
+				break
+			}
+			sum += val.(float64)
+			v.MutableValue(0.15/float64(NumVertices()) + 0.85*sum)
 		}
-		fmt.Println(val, currVal)
-		break
+	}
+
+	if v.Superstep() >= 30 {
+		neighbors := v.GetOutEdge()
+		n := float64(len(neighbors))
+		for _, edge := range neighbors {
+			v.SendMessageTo(edge.dest, v.GetValue()/n)
+		}
 	}
 }
 
 /* Actual implementation in worker*/
+type vertexMsgQ struct {
+	queue []*workerpb.Worker
+	index int
+}
+
+func (q vertexMsgQ) Next() (interface{}, bool) {
+	if (q.index + 1) >= len(q.queue) {
+		return 0, true
+	}
+	rd := bytes.NewReader(q.queue[q.index].GetMsgValue())
+	dec := gob.NewDecoder(rd)
+	var val float64
+	err := dec.Decode(&val)
+	if err != nil {
+		fmt.Println("decode error:", err.Error())
+		return val, true
+	}
+	return val, false
+
+}
 
 // GetValue returns value of the vertex
 func (v VertexPageRank) GetValue() float64 {
@@ -73,13 +101,13 @@ func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {
 			fmt.Println("Cannot encode msg value when sending msg")
 			return
 		}
-		newWorkerMsg := &workerpb.Worker{Source: uint32(myID), Stepcount: stepcount, MsgValue: b.Bytes()}
-		pb, err := proto.Marshal(newWorkerMsg)
-		if err != nil {
-			fmt.Println("Error when marshal worker-worker message.", err.Error())
-		}
-		sendToWorker(destVertexID, pb)
+		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: b.Bytes()}
+		sendToWorker(newWorkerMsg)
 
 	}
 
+}
+
+func (v VertexPageRank) GetOutEdge() []edgeT {
+	return vertices[v.Vertex_id()].neighbors
 }

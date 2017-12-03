@@ -46,8 +46,8 @@ var (
 	stepcount       uint64
 	myID            int
 	masterID        uint32
-	initChan        chan ssproto.Superstep
-	computeChan     chan ssproto.Superstep
+	initChan        chan *ssproto.Superstep
+	computeChan     chan *ssproto.Superstep
 	workerMsgChan   chan bool
 	masterMsg       ssproto.Superstep
 	workerIDs       [totalNodes]int //should range from 0-9
@@ -345,7 +345,7 @@ func listenMaster() {
 			fmt.Println("error occured!", err.Error())
 			return
 		}
-		go func() {
+		go func(conn net.Conn) {
 			defer conn.Close()
 
 			_, err = io.Copy(&buf, conn)
@@ -354,22 +354,24 @@ func listenMaster() {
 				return
 			}
 
-			proto.Unmarshal(buf.Bytes(), &masterMsg)
+			newMsg := &ssproto.Superstep{}
+
+			proto.Unmarshal(buf.Bytes(), newMsg)
 			// fmt.Println(masterMsg)
-			if masterMsg.GetSource() != masterID {
-				masterID = masterMsg.GetSource()
+			if newMsg.GetSource() != masterID {
+				masterID = newMsg.GetSource()
 			}
-			if masterMsg.GetCommand() == START {
+			if newMsg.GetCommand() == START {
 				if restartFlag {
-					computeChan <- masterMsg
+					computeChan <- newMsg
 				}
 				restartFlag = true
 				go initialize()
-				initChan <- masterMsg
+				initChan <- newMsg
 			} else {
-				computeChan <- masterMsg
+				computeChan <- newMsg
 			}
-		}()
+		}(conn)
 	}
 }
 
@@ -392,7 +394,7 @@ func listenWorker() {
 			fmt.Println("error occured!", err.Error())
 			return
 		}
-		go func() {
+		go func(conn net.Conn) {
 			defer conn.Close()
 
 			_, err = io.Copy(&buf, conn)
@@ -417,14 +419,14 @@ func listenWorker() {
 			activeMutex.Lock()
 			active[toVertexID] = true
 			activeMutex.Unlock()
-		}()
+		}(conn)
 	}
 }
 
 func main() {
 	//TODO: get myid from hostname
-	initChan = make(chan ssproto.Superstep)
-	computeChan = make(chan ssproto.Superstep)
+	initChan = make(chan *ssproto.Superstep)
+	computeChan = make(chan *ssproto.Superstep)
 	workerMsgChan = make(chan bool)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()

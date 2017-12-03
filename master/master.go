@@ -109,23 +109,24 @@ func standbyReivStepcount() {
 
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("error occured!")
+			fmt.Println("standbyReivStepcount Accept error occured!", err.Error())
 			return
 		}
-		defer conn.Close()
+		go func(conn net.Conn) {
+			defer conn.Close()
 
-		_, err = conn.Read(buf)
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
+			_, err = conn.Read(buf)
+			if err != nil {
+				fmt.Println("error occured!")
+				return
+			}
 
-		var newStepcount superstep.Superstep
-		proto.Unmarshal(buf, &newStepcount)
-		stepcount = int(newStepcount.GetStepcount())
-		standbyCount = workerNum
-		fmt.Printf("new meassge form master, stepcount: %d\n", stepcount)
-
+			var newStepcount superstep.Superstep
+			proto.Unmarshal(buf, &newStepcount)
+			stepcount = int(newStepcount.GetStepcount())
+			standbyCount = workerNum
+			fmt.Printf("new meassge form master, stepcount: %d\n", stepcount)
+		}(conn)
 	}
 
 }
@@ -348,23 +349,25 @@ func listenWorker() {
 			fmt.Println("error occured!")
 			return
 		}
-		defer conn.Close()
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
-
-		proto.Unmarshal(buf.Bytes(), &pb)
-		if !isStandBy {
-			fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
-			workerRes <- pb
-		} else {
-			if int(pb.GetStepcount()) == stepcount {
-				fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
-				standbyCount--
+		go func(conn net.Conn) {
+			defer conn.Close()
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!")
+				return
 			}
-		}
+
+			proto.Unmarshal(buf.Bytes(), &pb)
+			if !isStandBy {
+				fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
+				workerRes <- pb
+			} else {
+				if int(pb.GetStepcount()) == stepcount {
+					fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
+					standbyCount--
+				}
+			}
+		}(conn)
 	}
 }
 

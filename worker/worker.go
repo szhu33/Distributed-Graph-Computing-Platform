@@ -185,18 +185,9 @@ func initialize() {
 /* worker related function */
 func computeAllVertex() {
 	fmt.Println("vertices on entering computeAllvertex:", len(vertices))
-	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
-	}
-	for key := range vertices {
-		fmt.Println("key:", key)
-	}
 
 	for {
 		for key := range vertices {
-			if key == 0 {
-				fmt.Println("panic! key==0 when processing msg in 1st for loop")
-			}
 			info := vertices[key]
 			if !info.active {
 				continue
@@ -225,9 +216,6 @@ func computeAllVertex() {
 		}
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
-			if key == 0 {
-				fmt.Println("panic! key==0 when swap queue in 3rd for loop")
-			}
 			info := vertices[key]
 			info.msgQueue = info.nextMsgQueue
 			info.nextMsgQueue = make([]*workerpb.Worker, 0)

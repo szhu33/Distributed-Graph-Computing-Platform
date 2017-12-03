@@ -15,7 +15,7 @@ const (
 	masterID   = 10
 	nodeName   = "fa17-cs425-g28-%02d.cs.illinois.edu%s"
 	APP1       = "PageRank"
-	APP2       = "Another"
+	APP2       = "SSSP"
 )
 
 var (

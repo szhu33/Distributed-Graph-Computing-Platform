@@ -31,10 +31,13 @@ const (
 	HALT             = ssproto.Superstep_VOTETOHALT
 	VOTETOHALT       = ssproto.Superstep_VOTETOHALT
 	localInputName   = "localFile.txt"
+	APP1_PR          = "PageRank"
+	APP2_SSSP        = "SSSP"
 )
 
 type vertexInfo struct {
 	VertexPageRank
+	VertexSSSP
 }
 
 type edgeT struct {
@@ -221,7 +224,11 @@ func computeAllVertex() {
 			}
 			var mq = &vertexMsgQ{queue: msgQueue[key], index: 0}
 			activeMutex.Lock()
-			active[key] = info.Compute(mq)
+			if appName == APP1_PR {
+				active[key] = info.VertexPageRank.Compute(mq)
+			} else if appName == APP2_SSSP {
+				active[key] = info.VertexSSSP.Compute(mq)
+			}
 			activeMutex.Unlock()
 			vertices[key] = info
 		}
@@ -256,9 +263,13 @@ func computeAllVertex() {
 		}
 		fmt.Println("Superstep:", stepcount)
 		nextCmd := <-computeChan
-		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {
+		if nextCmd.GetCommand() == ACK {
 			fmt.Println(nextCmd.GetCommand().String())
 			returnResults()
+			return
+		}
+		if nextCmd.GetCommand() == START {
+			fmt.Println(nextCmd.GetCommand().String())
 			return
 		}
 		time.Sleep(50 * time.Millisecond)
@@ -285,7 +296,11 @@ func returnResults() {
 
 	for key, info := range vertices {
 		newV := ssproto.Vertex{}
-		newV.Value = info.VertexPageRank.GetValue()
+		if appName == APP1_PR {
+			newV.Value = info.VertexPageRank.GetValue()
+		} else if appName == APP2_SSSP {
+			newV.Value = info.VertexSSSP.GetValue()
+		}
 		newV.Id = uint64(key)
 		// fmt.Println("key in vertices: ", key, "in VertexPageRank", newV)
 		ret = append(ret, &newV)

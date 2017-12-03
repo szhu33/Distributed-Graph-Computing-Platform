@@ -330,6 +330,9 @@ func listenWorker() {
 			toVertexID := int(newWorkerMsg.GetToVertex())
 			temp := vertices[toVertexID]
 			temp.nextMsgQueue = append(temp.nextMsgQueue, newWorkerMsg)
+			if !temp.active {
+				temp.active = true
+			}
 			vertices[toVertexID] = temp
 		}()
 	}

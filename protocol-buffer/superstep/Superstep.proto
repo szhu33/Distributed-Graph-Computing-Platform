@@ -13,4 +13,6 @@ message Superstep {
     Command command = 2;
     uint64 stepcount = 3;
     string datasetFilename = 4;
+    bytes result = 5
+    // [{vertexID:id, value:val},{vertexID:id, value:val},{vertexID:id, value:val}...]
 }

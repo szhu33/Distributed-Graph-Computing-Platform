@@ -58,6 +58,8 @@ var (
 	msgQueue        map[int][]*workerpb.Worker
 	nextMsgQueue    map[int][]*workerpb.Worker
 	neighborMap     map[int][]edgeT
+	appName         string
+	SSSP_source     int
 )
 
 /* failure handling function */
@@ -195,7 +197,7 @@ func initialize() {
 	newMasterMsg := <-initChan
 	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
-
+	appName = newMasterMsg.GetApplication()
 	updateWorkerIDs()
 	dataset = sdfs.GetGraphInput(datasetFilename)
 	updateVertex()

@@ -19,5 +19,6 @@ message Superstep {
     Command command = 2;
     uint64 stepcount = 3;
     string datasetFilename = 4;
-    repeated Vertex vertices = 5; 
+    string application = 5;
+    repeated Vertex vertices = 6; 
 }

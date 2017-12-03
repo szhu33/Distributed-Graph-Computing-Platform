@@ -28,9 +28,9 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 				break
 			}
 			sum += val.(float64)
-			v.MutableValue(0.15/float64(NumVertices()) + 0.85*sum)
-			fmt.Println(v.Value)
 		}
+		v.MutableValue(0.15/float64(NumVertices()) + 0.85*sum)
+		fmt.Println(v.Value)
 	}
 
 	if v.Superstep() < 30 {

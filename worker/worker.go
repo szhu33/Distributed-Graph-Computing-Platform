@@ -185,6 +185,9 @@ func computeAllVertex() {
 	for key, val := range vertices {
 		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
 	}
+	for key := range vertices {
+		fmt.Println("key:", key)
+	}
 
 	for {
 		for key := range vertices {

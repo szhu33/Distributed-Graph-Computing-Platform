@@ -179,6 +179,9 @@ func computeAllVertex() {
 	for {
 		for key := range vertices {
 			info := vertices[key]
+			if !info.active {
+				continue
+			}
 			var mq = vertexMsgQ{queue: info.msgQueue, index: 0}
 			info.Compute(mq)
 			vertices[key] = info

@@ -32,17 +32,17 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		// fmt.Println("superstep", stepcount, "vertex:", v.Vertex_id(), "sum:", sum, "newVal:", newVal, "numVertices:", NumVertices())
 	}
 
-	fmt.Println("Current superstep:", v.Superstep())
+	// fmt.Println("Current superstep:", v.Superstep())
 	if v.Superstep() < 30 {
 		neighbors := v.GetOutEdge()
 		n := float64(len(neighbors))
-		fmt.Println("neighbor nums", n, neighbors)
+		// fmt.Println("neighbor nums", n, neighbors)
 		for _, edge := range neighbors {
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
-			fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
+			// fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
 		}
 	} else {
-		fmt.Println("Halt vertex:", v.Vertex_id())
+		// fmt.Println("Halt vertex:", v.Vertex_id())
 		return v.VoteToHalt()
 	}
 	return true
@@ -55,7 +55,7 @@ type vertexMsgQ struct {
 }
 
 func (q *vertexMsgQ) Next() (float64, bool) {
-	fmt.Println("index:", q.index, "len:", len(q.queue))
+	// fmt.Println("index:", q.index, "len:", len(q.queue))
 	if q.index >= len(q.queue) {
 		return 0.0, true
 	}

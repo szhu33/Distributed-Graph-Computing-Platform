@@ -196,7 +196,7 @@ func computeAllVertex() {
 			info.active = info.Compute(mq)
 			vertices[key] = info
 		}
-
+		time.Sleep(time.Second)
 		allHalt := true
 		for _, info := range vertices {
 			if info.active {

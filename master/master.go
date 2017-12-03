@@ -321,33 +321,34 @@ func listenWorker() {
 	defer ln.Close()
 
 	for {
-		var buf bytes.Buffer
+		func() {
+			var buf bytes.Buffer
 
-		var pb superstep.Superstep
+			var pb superstep.Superstep
 
-		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
-		defer conn.Close()
-		_, err = io.Copy(&buf, conn)
-		if err != nil {
-			fmt.Println("error occured!")
-			return
-		}
-
-		proto.Unmarshal(buf.Bytes(), &pb)
-		if !isStandBy {
-			fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
-			workerRes <- pb
-		} else {
-			if int(pb.GetStepcount()) == stepcount {
-				fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
-				standbyCount--
+			conn, err := ln.Accept()
+			if err != nil {
+				fmt.Println("error occured!")
+				return
 			}
-		}
+			defer conn.Close()
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!")
+				return
+			}
 
+			proto.Unmarshal(buf.Bytes(), &pb)
+			if !isStandBy {
+				fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
+				workerRes <- pb
+			} else {
+				if int(pb.GetStepcount()) == stepcount {
+					fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
+					standbyCount--
+				}
+			}
+		}()
 	}
 }
 

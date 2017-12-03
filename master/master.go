@@ -304,7 +304,7 @@ func getAllResults() {
 		sendCount--
 		workerResult := res.GetVertices()
 		for key := range workerResult {
-			finalRes.Push(workerResult[key])
+			heap.Push(finalRes, workerResult[key])
 		}
 		// finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)

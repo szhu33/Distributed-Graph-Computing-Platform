@@ -33,11 +33,7 @@ const (
 )
 
 type vertexInfo struct {
-	active       bool
-	neighbors    []edgeT
-	msgQueue     []*workerpb.Worker
-	nextMsgQueue []*workerpb.Worker
-
+	neighbors []edgeT
 	VertexPageRank
 }
 
@@ -59,6 +55,9 @@ var (
 	dataset         []byte
 	idToVM          map[int]int
 	restartFlag     = false
+	active          map[int]bool
+	msgQueue        map[int][]*workerpb.Worker
+	nextMsgQueue    map[int][]*workerpb.Worker
 )
 
 /* failure handling function */
@@ -133,12 +132,12 @@ func updateVertex() {
 			continue
 		}
 		if fromVM == myID {
+			active[from] = true
 			if _, ok := vertices[from]; ok {
 				tempInfo := vertices[from]
 				fmt.Println("however from ! 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = from
-				tempInfo.active = true
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
 				vertices[from] = tempInfo
 			} else {
@@ -146,16 +145,18 @@ func updateVertex() {
 				nei = append(nei, edgeT{dest: to, value: 1})
 				vpr := VertexPageRank{Id: from, Value: 1}
 				fmt.Println(vpr)
-				vertices[from] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
+				vertices[from] = vertexInfo{neighbors: nei, VertexPageRank: vpr}
+				msgQueue[from] = make([]*workerpb.Worker, 0)
+				nextMsgQueue[from] = make([]*workerpb.Worker, 0)
 			}
 		}
 		if toVM == myID {
+			active[toVM] = true
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
 				fmt.Println("however to 5555555")
 				tempInfo.VertexPageRank.Value = 1
 				tempInfo.VertexPageRank.Id = to
-				tempInfo.active = true
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: from, value: 1})
 				vertices[to] = tempInfo
 			} else {
@@ -163,14 +164,16 @@ func updateVertex() {
 				nei = append(nei, edgeT{dest: from, value: 1})
 				vpr := VertexPageRank{Id: to, Value: 1}
 				fmt.Println(vpr)
-				vertices[to] = vertexInfo{active: true, neighbors: nei, VertexPageRank: vpr}
+				vertices[to] = vertexInfo{neighbors: nei, VertexPageRank: vpr}
+				msgQueue[to] = make([]*workerpb.Worker, 0)
+				nextMsgQueue[to] = make([]*workerpb.Worker, 0)
 			}
 		}
 	}
 	fmt.Println("Vertices result")
 	fmt.Println(len(vertices))
 	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors)
+		fmt.Println("key:", key, " active:", active[key], ", neighbors:", val.neighbors)
 	}
 	fmt.Println(idToVM)
 }
@@ -179,6 +182,9 @@ func initialize() {
 	stepcount = 0
 	vertices = make(map[int]vertexInfo)
 	idToVM = make(map[int]int)
+	active = make(map[int]bool)
+	msgQueue = make(map[int][]*workerpb.Worker)
+	nextMsgQueue = make(map[int][]*workerpb.Worker)
 	newMasterMsg := <-initChan
 	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
@@ -196,16 +202,16 @@ func computeAllVertex() {
 	for {
 		for key := range vertices {
 			info := vertices[key]
-			if !info.active {
+			if !active[key] {
 				continue
 			}
-			var mq = &vertexMsgQ{queue: info.msgQueue, index: 0}
-			info.active = info.Compute(mq)
+			var mq = &vertexMsgQ{queue: msgQueue[key], index: 0}
+			active[key] = info.Compute(mq)
 			vertices[key] = info
 		}
 		allHalt := true
-		for _, info := range vertices {
-			if info.active {
+		for key := range vertices {
+			if active[key] {
 				allHalt = false
 			}
 		}
@@ -223,8 +229,8 @@ func computeAllVertex() {
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
 			info := vertices[key]
-			info.msgQueue = info.nextMsgQueue
-			info.nextMsgQueue = make([]*workerpb.Worker, 0)
+			msgQueue[key] = nextMsgQueue[key]
+			nextMsgQueue[key] = make([]*workerpb.Worker, 0)
 			vertices[key] = info
 		}
 	}
@@ -238,7 +244,7 @@ func returnResults() {
 	fmt.Println("After computation:")
 	fmt.Println(len(vertices))
 	for key, val := range vertices {
-		fmt.Println("key:", key, " active:", val.active, ", neighbors:", val.neighbors, val.VertexPageRank)
+		fmt.Println("key:", key, " active:", active[key], ", neighbors:", val.neighbors, val.VertexPageRank)
 	}
 
 	for key, info := range vertices {
@@ -384,12 +390,10 @@ func listenWorker() {
 			}
 			fmt.Println(newWorkerMsg)
 			toVertexID := int(newWorkerMsg.GetToVertex())
-			temp := vertices[toVertexID]
-			temp.nextMsgQueue = append(temp.nextMsgQueue, newWorkerMsg)
-			if !temp.active {
-				temp.active = true
-			}
-			vertices[toVertexID] = temp
+			tempQ := nextMsgQueue[toVertexID]
+			tempQ = append(tempQ, newWorkerMsg)
+			nextMsgQueue[toVertexID] = tempQ
+			active[toVertexID] = true
 		}()
 	}
 }

@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"container/heap"
 	"cs425_mp4/failure-detector"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/protocol-buffer/superstep"
 	"cs425_mp4/sdfs"
 	"cs425_mp4/utility"
+	"cs425_mp4/utility/heap"
 	"fmt"
 	"io"
 	"net"
@@ -46,7 +48,7 @@ var (
 	masterFailure chan bool
 	clientRequest masterclient.MasterClient
 	app           string
-	finalRes      []*superstep.Vertex
+	finalRes      *maxheap.VertexHeap
 	isStandBy     bool
 	standbyCount  int
 )
@@ -275,7 +277,6 @@ func initialize() {
 	stepcount = 0
 	workerRes = make(chan superstep.Superstep)
 	workerInfos = make(map[uint32]workerStepState)
-	finalRes = make([]*superstep.Vertex, 0)
 	membersStatus := fd.MemberStatus()
 	for i := 0; i < len(membersStatus); i++ {
 		if i == clientID || i == standbyID || i == masterID {
@@ -287,6 +288,11 @@ func initialize() {
 
 func getAllResults() {
 	// send all workers ACK to stop computing
+
+	// initialize a heap
+	finalRes = &maxheap.VertexHeap{}
+	heap.Init(finalRes)
+
 	sendCount := 0
 	for key := range workerInfos {
 		cmd := ACK
@@ -296,11 +302,16 @@ func getAllResults() {
 	for sendCount != 0 {
 		res := <-workerRes
 		sendCount--
-		finalRes = append(finalRes, res.GetVertices()...)
+		workerResult := res.GetVertices()
+		for key := range workerResult {
+			finalRes.Push(workerResult[key])
+		}
+		// finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
 	}
-	for _, v := range finalRes {
-		fmt.Println(*v)
+	for finalRes.Len() > 0 {
+		elem := finalRes.Pop().(*superstep.Vertex)
+		fmt.Println(*elem)
 	}
 }
 func allVoteToHalt() bool {

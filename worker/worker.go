@@ -156,7 +156,7 @@ func updateVertex() {
 			}
 		}
 		if toVM == myID {
-			active[toVM] = true
+			active[to] = true
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
 				fmt.Println("however to 5555555")

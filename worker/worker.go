@@ -244,9 +244,9 @@ func sendToWorker(msgpb *workerpb.Worker) {
 		if err != nil {
 			fmt.Println("Error when marshal worker-worker message.", err.Error())
 		}
-		conn, err := net.Dial("tcp", util.HostnameStr(dest, workerPort))
+		conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
 		if err != nil {
-			fmt.Println("Dial to master failed!", err.Error())
+			fmt.Println("Dial to worker failed!", err.Error())
 		}
 		defer conn.Close()
 		conn.Write(pb)

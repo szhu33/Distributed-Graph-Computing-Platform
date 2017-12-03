@@ -106,7 +106,6 @@ func (v VertexPageRank) SendMessageTo(destVertexID int, msgV interface{}) {
 		}
 		newWorkerMsg := &workerpb.Worker{FromVertex: uint64(v.Id), Stepcount: stepcount, ToVertex: uint64(destVertexID), MsgValue: b.Bytes()}
 		sendToWorker(newWorkerMsg)
-
 	}
 
 }

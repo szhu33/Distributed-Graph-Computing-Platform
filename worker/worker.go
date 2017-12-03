@@ -288,24 +288,24 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 func sendToWorker(msgpb *workerpb.Worker) {
 	toVertexID := int(msgpb.GetToVertex())
 	dest := idToVM[toVertexID]
-	if dest == myID {
-		// Insert to local queue
-		temp := vertices[toVertexID]
-		temp.nextMsgQueue = append(temp.nextMsgQueue, msgpb)
-		vertices[toVertexID] = temp
-	} else {
-		// Send to other worker
-		pb, err := proto.Marshal(msgpb)
-		if err != nil {
-			fmt.Println("Error when marshal worker-worker message.", err.Error())
-		}
-		conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
-		if err != nil {
-			fmt.Println("Dial to worker failed!", err.Error())
-		}
-		defer conn.Close()
-		conn.Write(pb)
+	// if dest == myID {
+	// 	// Insert to local queue
+	// 	temp := vertices[toVertexID]
+	// 	temp.nextMsgQueue = append(temp.nextMsgQueue, msgpb)
+	// 	vertices[toVertexID] = temp
+	// } else {
+	// Send to other worker
+	pb, err := proto.Marshal(msgpb)
+	if err != nil {
+		fmt.Println("Error when marshal worker-worker message.", err.Error())
 	}
+	conn, err := net.Dial("tcp", util.HostnameStr(dest+1, workerPort))
+	if err != nil {
+		fmt.Println("Dial to worker failed!", err.Error())
+	}
+	defer conn.Close()
+	conn.Write(pb)
+	// }
 }
 
 /* master related function */

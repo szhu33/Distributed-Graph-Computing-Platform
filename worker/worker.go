@@ -232,6 +232,7 @@ func computeAllVertex() {
 		} else {
 			sendToMaster(ACK)
 		}
+		fmt.Println("Superstep:", stepcount)
 		nextCmd := <-computeChan
 		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {
 			fmt.Println(nextCmd.GetCommand().String())

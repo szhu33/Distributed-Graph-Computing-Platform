@@ -298,7 +298,6 @@ func getAllResults() {
 		sendCount--
 		finalRes = append(finalRes, res.GetVertices()...)
 		fmt.Printf("received a result, sendcount-- now is %d\n", sendCount)
-
 	}
 	for _, v := range finalRes {
 		fmt.Println(*v)
@@ -360,6 +359,7 @@ COMPUTE:
 		// send standby master the stepcount
 		go sendStandbyStepcount()
 		// send worker to run next step
+		time.Sleep(time.Second)
 		for key := range workerInfos {
 			cmd := RUN
 			if stepcount == 0 {

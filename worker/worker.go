@@ -134,6 +134,9 @@ func updateVertex() {
 		}
 		if fromVM == myID {
 			if _, ok := vertices[from]; ok {
+				if from == 12 || from == 200 {
+					fmt.Println("WARNING !!!! ", vertices[from].VertexPageRank)
+				}
 				tempInfo := vertices[from]
 				tempInfo.neighbors = append(tempInfo.neighbors, edgeT{dest: to, value: 1})
 				vertices[from] = tempInfo

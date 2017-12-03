@@ -448,7 +448,7 @@ func listenWorker() {
 				fmt.Println("listenWorker: Error unmarshall.", err.Error())
 				return
 			}
-			fmt.Println(newWorkerMsg)
+			// fmt.Println(newWorkerMsg)
 			for _, value := range newWorkerMsg.Vertices {
 				toVertexID := int(value.GetToVertex())
 				msgQMutex.Lock()

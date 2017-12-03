@@ -60,9 +60,9 @@ func (q *vertexMsgQ) Next() (float64, bool) {
 	if q.index >= len(q.queue) {
 		return 0.0, true
 	}
-	q.index++
-	val := q.queue[q.index].GetMsgValue()
 
+	val := q.queue[q.index].GetMsgValue()
+	q.index++
 	return val, false
 }
 

@@ -29,7 +29,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 			}
 			sum += val.(float64)
 			v.MutableValue(0.15/float64(NumVertices()) + 0.85*sum)
-			fmt.Println(sum)
+			fmt.Println(v.Value)
 		}
 	}
 

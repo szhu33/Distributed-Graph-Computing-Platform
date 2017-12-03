@@ -17,7 +17,7 @@ type VertexPageRank struct {
 // Compute is the client implementation
 // return the active status of the vertex
 func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
-	if stepcount == 0 {
+	if v.Superstep() == 0 {
 		fmt.Println("stepcount0!")
 	}
 	if v.Superstep() >= 1 {
@@ -39,6 +39,9 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		neighbors := v.GetOutEdge()
 		n := float64(len(neighbors))
 		for _, edge := range neighbors {
+			if v.Superstep() == 0 {
+				fmt.Println("send out msg when stepcount ==0")
+			}
 			v.SendMessageTo(edge.dest, v.GetValue()/n)
 			fmt.Println("superstep", stepcount, "send out msg from:", v.Vertex_id(), "Send to:", edge.dest, "val:", v.GetValue()/n)
 		}

@@ -262,10 +262,10 @@ func computeAllVertex() {
 		}
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
-			msgQMutex.Lock()
+			info := vertices[key]
 			msgQueue[key] = nextMsgQueue[key]
 			nextMsgQueue[key] = make([]*workerpb.Worker, 0)
-			msgQMutex.Unlock()
+			vertices[key] = info
 		}
 	}
 

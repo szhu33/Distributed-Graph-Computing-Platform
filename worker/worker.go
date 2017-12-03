@@ -3,9 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"cs425_mp4/api"
 	fd "cs425_mp4/failure-detector"
 	ssproto "cs425_mp4/protocol-buffer/superstep"
+	"cs425_mp4/protocol-buffer/worker-worker"
 	"cs425_mp4/sdfs"
 	"cs425_mp4/utility"
 	"fmt"
@@ -33,11 +33,12 @@ const (
 )
 
 type vertexInfo struct {
-	active    bool
-	neighbors []edgeT
-	value     float64
-	msgs      []float64
-	prevMsgs  []float64
+	active       bool
+	neighbors    []edgeT
+	value        float64
+	msgQueue     []*workerpb.Worker
+	nextMsgQueue []*workerpb.Worker
+
 	VertexPageRank
 }
 
@@ -58,6 +59,7 @@ var (
 	datasetFilename string
 	dataset         []byte
 	idToVM          map[int]int
+	restartFlag     = false
 )
 
 /* failure handling function */
@@ -175,9 +177,9 @@ func initialize() {
 /* worker related function */
 func computeAllVertex() {
 	for {
-		var msgs api.MessageIterator
 		for _, info := range vertices {
-			info.Compute(msgs)
+			var mq = vertexMsgQ{queue: info.msgQueue, index: 0}
+			info.Compute(mq)
 		}
 
 		allHalt := true
@@ -193,6 +195,7 @@ func computeAllVertex() {
 		}
 		nextCmd := <-computeChan
 		if nextCmd.GetCommand() == START || nextCmd.GetCommand() == ACK {
+			fmt.Println(nextCmd.GetCommand().String())
 			return
 		}
 		stepcount = nextCmd.GetStepcount()
@@ -201,8 +204,8 @@ func computeAllVertex() {
 }
 
 func sendToMaster(cmd ssproto.Superstep_Command) {
-	newHaltMsg := &ssproto.Superstep{Source: uint32(myID), Command: cmd, Stepcount: stepcount}
-	pb, err := proto.Marshal(newHaltMsg)
+	newMsg := &ssproto.Superstep{Source: uint32(myID), Command: cmd, Stepcount: stepcount}
+	pb, err := proto.Marshal(newMsg)
 	if err != nil {
 		fmt.Println("Error when marshal halt message.", err.Error())
 	}
@@ -215,20 +218,26 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 	conn.Write(pb)
 }
 
-func sendToWorker(vid int, msg []byte) {
-	dest := idToVM[vid]
-
+func sendToWorker(msgpb *workerpb.Worker) {
+	dest := idToVM[int(msgpb.GetToVertex())]
 	if dest == myID {
 		// Insert to local queue
+		temp := vertices[dest]
+		temp.nextMsgQueue = append(temp.nextMsgQueue, msgpb)
+		vertices[dest] = temp
 	} else {
+		// Send to other worker
+		pb, err := proto.Marshal(msgpb)
+		if err != nil {
+			fmt.Println("Error when marshal worker-worker message.", err.Error())
+		}
 		conn, err := net.Dial("tcp", util.HostnameStr(dest, workerPort))
 		if err != nil {
 			fmt.Println("Dial to master failed!", err.Error())
 		}
 		defer conn.Close()
-		conn.Write(msg)
+		conn.Write(pb)
 	}
-
 }
 
 /* master related function */
@@ -263,12 +272,52 @@ func listenMaster() {
 				masterID = masterMsg.GetSource()
 			}
 			if masterMsg.GetCommand() == START {
+				if restartFlag {
+					computeChan <- masterMsg
+				}
 				go initialize()
 				initChan <- masterMsg
-			} else {
+			} else if masterMsg.GetCommand() == HALT {
 				computeChan <- masterMsg
 			}
 
+		}()
+	}
+}
+
+/* master related function */
+func listenWorker() {
+	ln, err := net.Listen("tcp", workerPort)
+	if err != nil {
+		fmt.Println("cannot listen on port", workerPort, err.Error())
+		return
+	}
+	defer ln.Close()
+
+	for {
+		var buf bytes.Buffer
+
+		conn, err := ln.Accept()
+		func() {
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
+			defer conn.Close()
+
+			_, err = io.Copy(&buf, conn)
+			if err != nil {
+				fmt.Println("error occured!", err.Error())
+				return
+			}
+
+			newWorkerMsg := &workerpb.Worker{}
+			proto.Unmarshal(buf.Bytes(), newWorkerMsg)
+			fmt.Println(newWorkerMsg)
+			toVertexID := int(newWorkerMsg.GetToVertex())
+			temp := vertices[toVertexID]
+			temp.nextMsgQueue = append(temp.nextMsgQueue, newWorkerMsg)
+			vertices[toVertexID] = temp
 		}()
 	}
 }
@@ -281,7 +330,13 @@ func main() {
 	myID = util.GetIDFromHostname()
 	masterID = 9
 	go listenMaster()
+	go listenWorker()
 	for {
 		time.Sleep(time.Second)
 	}
+}
+
+// NumVertices returns the number of vertices in the graph
+func NumVertices() int {
+	return len(idToVM)
 }

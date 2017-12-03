@@ -2,8 +2,8 @@ syntax = "proto3";
 package workerpb;
 
 message Worker {
-    uint32 source = 1; // sender ID
+    uint64 fromVertex = 1; // sender ID
     uint64 stepcount = 2;
-    uint64 vertexID = 3;
+    uint64 toVertex= 3;
     bytes msgValue = 4;
 }

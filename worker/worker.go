@@ -48,6 +48,7 @@ var (
 	masterID        uint32
 	initChan        chan ssproto.Superstep
 	computeChan     chan ssproto.Superstep
+	workerMsgChan   chan bool
 	masterMsg       ssproto.Superstep
 	workerIDs       [totalNodes]int //should range from 0-9
 	datasetFilename string
@@ -183,6 +184,7 @@ func updateVertex() {
 	// 	fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val)
 	// }
 	// fmt.Println(idToVM)
+	workerMsgChan <- true
 }
 
 func initialize() {
@@ -378,6 +380,8 @@ func listenWorker() {
 	}
 	defer ln.Close()
 
+	<-workerMsgChan
+
 	for {
 		var buf bytes.Buffer
 
@@ -417,6 +421,7 @@ func main() {
 	//TODO: get myid from hostname
 	initChan = make(chan ssproto.Superstep)
 	computeChan = make(chan ssproto.Superstep)
+	workerMsgChan = make(chan bool)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	masterID = 9

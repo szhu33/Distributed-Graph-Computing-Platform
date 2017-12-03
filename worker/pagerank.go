@@ -32,6 +32,7 @@ func (v *VertexPageRank) Compute(msgs api.MessageIterator) bool {
 		// fmt.Println("superstep", stepcount, "vertex:", v.Vertex_id(), "sum:", sum, "newVal:", newVal, "numVertices:", NumVertices())
 	}
 
+	fmt.Println("Current superstep:", v.Superstep())
 	if v.Superstep() < 30 {
 		neighbors := v.GetOutEdge()
 		n := float64(len(neighbors))

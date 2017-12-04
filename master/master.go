@@ -77,8 +77,8 @@ func detectFailure() {
 					standbyFail = true
 					fmt.Println("standby master failed. Continue computing!")
 				} else {
-					fmt.Println("worker failure, id is ", i)
 					if startComputeFlag {
+						fmt.Println("worker failure, id is ", i)
 						workerFailure <- i
 					}
 				}

@@ -348,7 +348,12 @@ func returnResults() {
 		fmt.Println("Unmarshall: error occured!", err.Error())
 		return
 	}
-	conn, err := net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))
+	var conn net.Conn
+	if !standbyFlag {
+		conn, err = net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))
+	} else {
+		conn, err = net.Dial("tcp", util.HostnameStr(int(DEFAULTSTANDBY+1), masterworkerPort))
+	}
 	if err != nil {
 		fmt.Println("Send result: Dial to master failed!", err.Error())
 		return

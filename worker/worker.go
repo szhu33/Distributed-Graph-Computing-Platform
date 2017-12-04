@@ -331,6 +331,7 @@ func returnResults() {
 	}
 	defer conn.Close()
 	conn.Write(pb)
+	restartFlag = false
 }
 
 func sendToMaster(cmd ssproto.Superstep_Command) {

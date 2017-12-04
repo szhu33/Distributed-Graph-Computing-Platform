@@ -31,6 +31,7 @@ var (
 func main() {
 	myID = util.GetIDFromHostname()
 	var app, data string
+	var src int
 
 	for {
 		// handle input
@@ -40,6 +41,11 @@ func main() {
 		if app != APP1 && app != APP2 {
 			fmt.Println("Invalid command, please enter correct command")
 			continue
+		}
+
+		if app == APP2 {
+			fmt.Println("SSSP Source?")
+			fmt.Scanln(&src)
 		}
 
 		start := time.Now()
@@ -53,6 +59,7 @@ func main() {
 		msg := &masterclient.MasterClient{ClientID: uint32(myID)}
 		msg.Application = app
 		msg.Dataset = dataset
+		msg.Source = src
 
 		pb, err := proto.Marshal(msg)
 		if err != nil {

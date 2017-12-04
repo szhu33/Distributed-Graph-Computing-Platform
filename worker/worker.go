@@ -234,6 +234,7 @@ func initialize() {
 	fmt.Println("Entered initialize()")
 	datasetFilename = newMasterMsg.GetDatasetFilename()
 	appName = newMasterMsg.GetApplication()
+	SSSP_source = int(newMasterMsg.GetStartVertex())
 	fmt.Println("Application:", appName)
 	updateWorkerIDs()
 	dataset = sdfs.GetGraphInput(datasetFilename)

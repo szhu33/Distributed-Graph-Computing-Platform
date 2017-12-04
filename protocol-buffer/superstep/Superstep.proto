@@ -20,5 +20,6 @@ message Superstep {
     uint64 stepcount = 3;
     string datasetFilename = 4;
     string application = 5;
-    repeated Vertex vertices = 6; 
+    repeated Vertex vertices = 6;
+    uint32 startVertex = 7;
 }

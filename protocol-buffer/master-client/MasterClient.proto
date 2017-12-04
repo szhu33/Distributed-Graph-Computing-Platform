@@ -8,4 +8,6 @@ message MasterClient {
 
     bool success = 4;
     bytes result = 5;
+
+    uint32 src = 6;
 }

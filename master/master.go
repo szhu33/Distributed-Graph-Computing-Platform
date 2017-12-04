@@ -378,6 +378,10 @@ func listenWorker() {
 
 func startComputeGraph() {
 	sendCount := 0
+	for key := range workerInfos {
+		info := workerStepState{stepNum: stepcount, state: ACK}
+		workerInfos[key] = info
+	}
 
 COMPUTE:
 	for !allVoteToHalt() {

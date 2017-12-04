@@ -59,7 +59,7 @@ func main() {
 		msg := &masterclient.MasterClient{ClientID: uint32(myID)}
 		msg.Application = app
 		msg.Dataset = dataset
-		msg.Src = src
+		msg.Src = uint32(src)
 
 		pb, err := proto.Marshal(msg)
 		if err != nil {

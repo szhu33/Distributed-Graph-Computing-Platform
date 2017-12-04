@@ -34,18 +34,18 @@ func main() {
 
 	for {
 		// handle input
-		fmt.Println("Please enter command like: <Application> <Dataset filename>\nApplication includes PageRank and Another\n")
+		fmt.Println("Please enter command like: <Application> <Dataset filename>\nApplication includes PageRank and SSSP")
 		fmt.Scanln(&app, &data)
 
 		if app != APP1 && app != APP2 {
-			fmt.Println("Invalid command, please enter correct command\n")
+			fmt.Println("Invalid command, please enter correct command")
 			continue
 		}
 
 		start := time.Now()
 		dataset, err := ioutil.ReadFile(data)
 		if err != nil {
-			fmt.Println("unable to open the file, please enter correct command\n")
+			fmt.Println("unable to open the file, please enter correct command")
 			continue
 		}
 

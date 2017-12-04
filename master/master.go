@@ -146,8 +146,8 @@ func standbyReivStepcount() {
 
 func standbyUp() {
 	fmt.Println("enter standbyup!")
+	fmt.Println("standbycount", standbyCount)
 	for standbyCount > 0 && standbyCount < workerNum {
-		fmt.Println("standbycount", standbyCount)
 		res := <-workerRes
 		{
 			fmt.Println("get worker res")

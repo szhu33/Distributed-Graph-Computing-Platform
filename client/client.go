@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"cs425_mp4/protocol-buffer/master-client"
 	"cs425_mp4/utility"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"time"
@@ -79,18 +81,20 @@ func main() {
 			fmt.Printf("error has occured! %s\n", err)
 			return
 		}
-		defer connln.Close()
-		buf := make([]byte, 1024*1024)
-		_, err = connln.Read(buf)
+		var buf bytes.Buffer
+
+		_, err = io.Copy(&buf, connln)
 		if err != nil {
 			fmt.Printf("error has occured! %s\n", err)
 			return
 		}
 
-		proto.Unmarshal(buf, &output)
+		proto.Unmarshal(buf.Bytes(), &output)
 
 		fmt.Println(time.Since(start))
 		fmt.Println("get output!")
 		fmt.Println(string(output.GetResult()))
+		connln.Close()
+		ln.Close()
 	}
 }

@@ -66,8 +66,8 @@ var (
 	appName         string
 	SSSP_source     int
 
-	msgQMutex   = &sync.Mutex{}
-	activeMutex = &sync.Mutex{}
+	nextMsgQMutex = &sync.Mutex{}
+	activeMutex   = &sync.Mutex{}
 
 	combinerMsg map[int]*workerpb.WorkerTotal
 )
@@ -281,10 +281,10 @@ func computeAllVertex() {
 		time.Sleep(50 * time.Millisecond)
 		stepcount = nextCmd.GetStepcount()
 		for key := range vertices {
-			info := vertices[key]
+			nextMsgQMutex.Lock()
 			msgQueue[key] = nextMsgQueue[key]
 			nextMsgQueue[key] = make([]*workerpb.Worker, 0)
-			vertices[key] = info
+			nextMsgQMutex.Unlock()
 		}
 	}
 
@@ -351,11 +351,11 @@ func sendToWorker(msgpb *workerpb.Worker) {
 	dest := idToVM[toVertexID]
 	if dest == myID {
 		// Insert to local queue
-		msgQMutex.Lock()
+		nextMsgQMutex.Lock()
 		temp := nextMsgQueue[toVertexID]
 		temp = append(temp, msgpb)
 		nextMsgQueue[toVertexID] = temp
-		msgQMutex.Unlock()
+		nextMsgQMutex.Unlock()
 	} else {
 		// Send to other worker
 		if _, ok := combinerMsg[dest]; ok {
@@ -456,11 +456,11 @@ func listenWorker() {
 			// fmt.Println(newWorkerMsg)
 			for _, value := range newWorkerMsg.Vertices {
 				toVertexID := int(value.GetToVertex())
-				msgQMutex.Lock()
+				nextMsgQMutex.Lock()
 				tempQ := nextMsgQueue[toVertexID]
 				tempQ = append(tempQ, value)
 				nextMsgQueue[toVertexID] = tempQ
-				msgQMutex.Unlock()
+				nextMsgQMutex.Unlock()
 				activeMutex.Lock()
 				active[toVertexID] = true
 				activeMutex.Unlock()

@@ -37,22 +37,23 @@ type workerStepState struct {
 }
 
 var (
-	systemHalt    bool // system state, need all workers vote to halt twice
-	workerNum     = 7
-	myID          int
-	clientID      int
-	workerInfos   map[uint32]workerStepState
-	stepcount     int
-	workerRes     chan superstep.Superstep
-	workerFailure chan int
-	masterFailure chan bool
-	clientRequest masterclient.MasterClient
-	app           string
-	finalRes      *maxheap.VertexHeap
-	isStandBy     bool
-	standbyCount  int
-	appName       string
-	standbyFail   = false
+	systemHalt       bool // system state, need all workers vote to halt twice
+	workerNum        = 7
+	myID             int
+	clientID         int
+	workerInfos      map[uint32]workerStepState
+	stepcount        int
+	workerRes        chan superstep.Superstep
+	workerFailure    chan int
+	masterFailure    chan bool
+	clientRequest    masterclient.MasterClient
+	app              string
+	finalRes         *maxheap.VertexHeap
+	isStandBy        bool
+	standbyCount     int
+	appName          string
+	standbyFail      = false
+	startComputeFlag = false
 )
 
 /* failre handling function */
@@ -80,7 +81,9 @@ func detectFailure() {
 					fmt.Println("standby master failed. Continue computing!")
 				} else {
 					fmt.Println("worker failure, id is ", i)
-					workerFailure <- i
+					if startComputeFlag {
+						workerFailure <- i
+					}
 				}
 			}
 		}
@@ -121,6 +124,7 @@ func standbyReivStepcount() {
 	for {
 
 		conn, err := ln.Accept()
+		startComputeFlag = true
 		if err != nil {
 			fmt.Println("standbyReivStepcount Accept error occured!", err.Error())
 			return
@@ -392,6 +396,7 @@ func listenWorker() {
 }
 
 func startComputeGraph() {
+	startComputeFlag = true
 	sendCount := 0
 	for key := range workerInfos {
 		info := workerStepState{stepNum: stepcount, state: ACK}

@@ -38,7 +38,7 @@ type workerStepState struct {
 
 var (
 	systemHalt    bool // system state, need all workers vote to halt twice
-	workerNum     int
+	workerNum     = 7
 	myID          int
 	clientID      int
 	workerInfos   map[uint32]workerStepState
@@ -57,11 +57,14 @@ var (
 
 /* failre handling function */
 func detectFailure() {
+	fmt.Println("start detect failure!")
+	for !fd.GetIsInitialized() {
+		time.Sleep(time.Microsecond)
+		continue
+	}
+
 	for {
-		if !fd.GetIsInitialized() {
-			time.Sleep(time.Microsecond)
-			continue
-		}
+		fmt.Println("enter detect loop again")
 		memberStatus := fd.MemberStatus()
 		for i := 0; i < len(memberStatus); i++ {
 			if !memberStatus[i] {
@@ -69,6 +72,7 @@ func detectFailure() {
 					continue
 				} else if i == masterID {
 					isStandBy = false
+					fmt.Println("detected master failure!")
 					masterFailure <- true
 				} else if i == standbyID {
 					standbyFail = true
@@ -78,7 +82,7 @@ func detectFailure() {
 				}
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -143,9 +147,12 @@ func standbyWait() {
 }
 
 func standbyUp() {
+	fmt.Println("enter standbyup!")
 	for standbyCount > 0 {
+		fmt.Println("standbycount", standbyCount)
 		res := <-workerRes
 		{
+			fmt.Println("get worker res")
 			standbyCount--
 			// update workerInfos
 			if res.GetStepcount() == uint64(stepcount) {
@@ -372,8 +379,8 @@ func listenWorker() {
 				workerRes <- pb
 			} else {
 				if int(pb.GetStepcount()) == stepcount {
-					fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
 					standbyCount--
+					fmt.Printf("Standby Master: received ACK form worker: %d, standbycount:%d\n", pb.GetSource(), standbyCount)
 				}
 			}
 		}(conn)

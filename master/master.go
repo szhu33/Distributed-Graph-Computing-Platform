@@ -159,8 +159,10 @@ func standbyUp() {
 		}
 	}
 	sendCount := 0
+
 	for !allVoteToHalt() {
 		// send worker to run next step
+		time.Sleep(500 * time.Millisecond)
 		for key := range workerInfos {
 			cmd := RUN
 			if stepcount == 0 {
@@ -400,7 +402,6 @@ func startComputeGraph() {
 
 COMPUTE:
 	for !allVoteToHalt() {
-		fmt.Println("enter compute!")
 		// send standby master the stepcount
 		if !standbyFail {
 			go sendStandbyStepcount()

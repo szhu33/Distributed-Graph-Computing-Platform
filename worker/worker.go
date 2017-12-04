@@ -153,8 +153,13 @@ func updateVertex() {
 			active[from] = true
 			if _, ok := vertices[from]; ok {
 				tempInfo := vertices[from]
-				tempInfo.VertexPageRank.Value = 0
-				tempInfo.VertexPageRank.Id = from
+				if appName == APP1_PR {
+					tempInfo.VertexPageRank.Value = 0
+					tempInfo.VertexPageRank.Id = from
+				} else if appName == APP2_SSSP {
+					tempInfo.VertexSSSP.Value = 0
+					tempInfo.VertexSSSP.Id = from
+				}
 				vertices[from] = tempInfo
 				tempN := neighborMap[from]
 				tempN = append(tempN, edgeT{dest: to, value: 1})
@@ -162,8 +167,13 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: to, value: 1})
-				vpr := VertexPageRank{Id: from, Value: 0}
-				vertices[from] = vertexInfo{VertexPageRank: vpr}
+				if appName == APP1_PR {
+					vpr := VertexPageRank{Id: from, Value: 0}
+					vertices[from] = vertexInfo{VertexPageRank: vpr}
+				} else if appName == APP2_SSSP {
+					vpr := VertexSSSP{Id: from, Value: 0}
+					vertices[from] = vertexInfo{VertexSSSP: vpr}
+				}
 				neighborMap[from] = nei
 				msgQueue[from] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[from] = make([]*workerpb.Worker, 0)
@@ -173,8 +183,13 @@ func updateVertex() {
 			active[to] = true
 			if _, ok := vertices[to]; ok {
 				tempInfo := vertices[to]
-				tempInfo.VertexPageRank.Value = 0
-				tempInfo.VertexPageRank.Id = to
+				if appName == APP1_PR {
+					tempInfo.VertexPageRank.Value = 0
+					tempInfo.VertexPageRank.Id = to
+				} else if appName == APP2_SSSP {
+					tempInfo.VertexSSSP.Value = 0
+					tempInfo.VertexSSSP.Id = to
+				}
 				tempN := neighborMap[to]
 				tempN = append(tempN, edgeT{dest: from, value: 1})
 				neighborMap[to] = tempN
@@ -182,8 +197,14 @@ func updateVertex() {
 			} else {
 				nei := make([]edgeT, 0)
 				nei = append(nei, edgeT{dest: from, value: 1})
-				vpr := VertexPageRank{Id: to, Value: 0}
-				vertices[to] = vertexInfo{VertexPageRank: vpr}
+				if appName == APP1_PR {
+					vpr := VertexPageRank{Id: to, Value: 0}
+					vertices[to] = vertexInfo{VertexPageRank: vpr}
+				} else if appName == APP2_SSSP {
+					vpr := VertexSSSP{Id: to, Value: 0}
+					vertices[to] = vertexInfo{VertexSSSP: vpr}
+				}
+
 				neighborMap[to] = nei
 				msgQueue[to] = make([]*workerpb.Worker, 0)
 				nextMsgQueue[to] = make([]*workerpb.Worker, 0)

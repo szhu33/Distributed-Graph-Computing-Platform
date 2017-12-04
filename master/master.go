@@ -383,8 +383,13 @@ func startComputeGraph() {
 		workerInfos[key] = info
 	}
 
+	for key, elem := range workerInfos {
+		fmt.Println("key", key, " value ", elem)
+	}
+
 COMPUTE:
 	for !allVoteToHalt() {
+		fmt.Println("enter compute!")
 		// send standby master the stepcount
 		go sendStandbyStepcount()
 		// send worker to run next step

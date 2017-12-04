@@ -359,11 +359,11 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 	if !standbyFlag {
 		conn1, err1 := net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))
 		if err1 != nil {
-			fmt.Println("Dial to standby master failed!", err.Error())
-			return
+			standbyFlag = true
+		} else {
+			defer conn1.Close()
+			conn1.Write(pb)
 		}
-		defer conn1.Close()
-		conn1.Write(pb)
 	}
 }
 

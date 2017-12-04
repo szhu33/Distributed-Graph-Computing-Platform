@@ -33,6 +33,8 @@ const (
 	localInputName   = "localFile.txt"
 	APP1_PR          = "PageRank"
 	APP2_SSSP        = "SSSP"
+	DEFAULTSTANDBY   = 8
+	MASTERID         = 9
 )
 
 type vertexInfo struct {
@@ -49,7 +51,6 @@ var (
 	vertices        map[int]vertexInfo
 	stepcount       uint64
 	myID            int
-	masterID        uint32
 	initChan        chan *ssproto.Superstep
 	computeChan     chan *ssproto.Superstep
 	workerMsgChan   chan bool
@@ -70,6 +71,7 @@ var (
 	activeMutex   = &sync.Mutex{}
 
 	combinerMsg map[int]*workerpb.WorkerTotal
+	standbyFlag = false
 )
 
 /* failure handling function */
@@ -322,7 +324,7 @@ func returnResults() {
 		fmt.Println("Unmarshall: error occured!", err.Error())
 		return
 	}
-	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID+1), masterworkerPort))
+	conn, err := net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))
 	if err != nil {
 		fmt.Println("Send result: Dial to master failed!", err.Error())
 		return
@@ -338,12 +340,23 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 		fmt.Println("Error when marshal halt message.", err.Error())
 	}
 
-	conn, err := net.Dial("tcp", util.HostnameStr(int(masterID+1), masterworkerPort))
+	conn, err := net.Dial("tcp", util.HostnameStr(int(DEFAULTSTANDBY+1), masterworkerPort))
 	if err != nil {
 		fmt.Println("Dial to master failed!", err.Error())
+		return
 	}
 	defer conn.Close()
 	conn.Write(pb)
+
+	if !standbyFlag {
+		conn1, err1 := net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))
+		if err1 != nil {
+			fmt.Println("Dial to standby master failed!", err.Error())
+			return
+		}
+		defer conn1.Close()
+		conn.Write(pb)
+	}
 }
 
 func sendToWorker(msgpb *workerpb.Worker) {
@@ -402,8 +415,8 @@ func listenMaster() {
 
 			proto.Unmarshal(buf.Bytes(), newMsg)
 			// fmt.Println(masterMsg)
-			if newMsg.GetSource() != masterID {
-				masterID = newMsg.GetSource()
+			if newMsg.GetSource() != MASTERID {
+				standbyFlag = true
 			}
 			if newMsg.GetCommand() == START {
 				if restartFlag {
@@ -476,7 +489,6 @@ func main() {
 	workerMsgChan = make(chan bool)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
-	masterID = 9
 	go listenWorker()
 	listenMaster()
 }

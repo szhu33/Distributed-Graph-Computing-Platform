@@ -137,6 +137,7 @@ func standbyWait() {
 	isStandBy = false
 	standbyUp()
 }
+
 func standbyUp() {
 	for standbyCount > 0 {
 		res := <-workerRes
@@ -180,6 +181,7 @@ func uploadDataToSDFS() bool {
 
 /* client related function */
 func listenClient() {
+	fmt.Println("start listening client")
 	ln, err := net.Listen("tcp", clientPort)
 	if err != nil {
 		fmt.Println("cannot listen on port")
@@ -352,7 +354,7 @@ func listenWorker() {
 			fmt.Println("error occured!")
 			return
 		}
-		go func(conn net.Conn) {
+		func(conn net.Conn) {
 			defer conn.Close()
 			_, err = io.Copy(&buf, conn)
 			if err != nil {

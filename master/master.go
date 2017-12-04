@@ -52,6 +52,7 @@ var (
 	isStandBy     bool
 	standbyCount  int
 	appName       string
+	standbyFail   = false
 )
 
 /* failre handling function */
@@ -69,6 +70,9 @@ func detectFailure() {
 				} else if i == masterID {
 					isStandBy = false
 					masterFailure <- true
+				} else if i == standbyID {
+					standbyFail = true
+					fmt.Println("standby master failed. Continue computing!")
 				} else {
 					workerFailure <- i
 				}
@@ -391,7 +395,9 @@ COMPUTE:
 	for !allVoteToHalt() {
 		fmt.Println("enter compute!")
 		// send standby master the stepcount
-		go sendStandbyStepcount()
+		if !standbyFail {
+			go sendStandbyStepcount()
+		}
 		// send worker to run next step
 		time.Sleep(500 * time.Millisecond)
 		for key := range workerInfos {

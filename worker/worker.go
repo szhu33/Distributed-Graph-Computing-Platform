@@ -72,6 +72,7 @@ var (
 
 	combinerMsg map[int]*workerpb.WorkerTotal
 	standbyFlag = false
+	standbyFail = false
 )
 
 /* failure handling function */
@@ -343,13 +344,17 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 		fmt.Println("Error when marshal halt message.", err.Error())
 	}
 
-	conn, err := net.Dial("tcp", util.HostnameStr(int(DEFAULTSTANDBY+1), masterworkerPort))
-	if err != nil {
-		fmt.Println("Dial to master failed!", err.Error())
-		return
+	if !standbyFail {
+		conn, err := net.Dial("tcp", util.HostnameStr(int(DEFAULTSTANDBY+1), masterworkerPort))
+		if err != nil {
+			fmt.Println("Standby master failed", err.Error())
+			standbyFail = true
+		} else {
+			defer conn.Close()
+			conn.Write(pb)
+		}
+
 	}
-	defer conn.Close()
-	conn.Write(pb)
 
 	if !standbyFlag {
 		conn1, err1 := net.Dial("tcp", util.HostnameStr(int(MASTERID+1), masterworkerPort))

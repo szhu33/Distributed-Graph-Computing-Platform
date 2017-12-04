@@ -171,6 +171,7 @@ func standbyUp() {
 		}
 		stepcount++
 	}
+	getAllResults()
 }
 
 // upload dataset into sdfs TODO: implement this function
@@ -251,7 +252,6 @@ func sendClientRes() {
 	}
 	defer conn.Close()
 	conn.Write(pb)
-	getAllResults()
 }
 
 /* worker related function */

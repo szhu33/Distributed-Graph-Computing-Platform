@@ -143,9 +143,12 @@ func standbyWait() {
 }
 
 func standbyUp() {
+	fmt.Println("enter standbyup!")
 	for standbyCount > 0 {
+		fmt.Println("standbycount", standbyCount)
 		res := <-workerRes
 		{
+			fmt.Println("get worker res")
 			standbyCount--
 			// update workerInfos
 			if res.GetStepcount() == uint64(stepcount) {
@@ -372,8 +375,8 @@ func listenWorker() {
 				workerRes <- pb
 			} else {
 				if int(pb.GetStepcount()) == stepcount {
-					fmt.Printf("received ACK form worker: %d\n", pb.GetSource())
 					standbyCount--
+					fmt.Printf("Standby Master: received ACK form worker: %d, standbycount:%d\n", pb.GetSource(), standbyCount)
 				}
 			}
 		}(conn)

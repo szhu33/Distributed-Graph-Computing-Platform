@@ -48,12 +48,12 @@ type edgeT struct {
 }
 
 var (
-	vertices        map[int]vertexInfo
-	stepcount       uint64
-	myID            int
-	initChan        chan *ssproto.Superstep
-	computeChan     chan *ssproto.Superstep
-	workerMsgChan   chan bool
+	vertices    map[int]vertexInfo
+	stepcount   uint64
+	myID        int
+	initChan    chan *ssproto.Superstep
+	computeChan chan *ssproto.Superstep
+	// workerMsgChan   chan bool
 	masterMsg       ssproto.Superstep
 	workerIDs       [totalNodes]int //should range from 0-9
 	datasetFilename string
@@ -197,7 +197,7 @@ func updateVertex() {
 	// 	fmt.Println("key:", key, " active:", active[key], ", neighbors:", neighborMap[key], val)
 	// }
 	// fmt.Println(idToVM)
-	workerMsgChan <- true
+	// workerMsgChan <- true
 }
 
 func initialize() {
@@ -215,7 +215,9 @@ func initialize() {
 	fmt.Println("Application:", appName)
 	updateWorkerIDs()
 	dataset = sdfs.GetGraphInput(datasetFilename)
+	nextMsgQMutex.Lock()
 	updateVertex()
+	nextMsgQMutex.Unlock()
 	computeAllVertex()
 }
 
@@ -442,7 +444,7 @@ func listenWorker() {
 	}
 	defer ln.Close()
 
-	<-workerMsgChan
+	// <-workerMsgChan
 
 	for {
 		var buf bytes.Buffer
@@ -487,7 +489,7 @@ func main() {
 	//TODO: get myid from hostname
 	initChan = make(chan *ssproto.Superstep)
 	computeChan = make(chan *ssproto.Superstep)
-	workerMsgChan = make(chan bool)
+	// workerMsgChan = make(chan bool)
 	go sdfs.Start()
 	myID = util.GetIDFromHostname()
 	go listenWorker()

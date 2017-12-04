@@ -38,7 +38,7 @@ type workerStepState struct {
 
 var (
 	systemHalt    bool // system state, need all workers vote to halt twice
-	workerNum     int
+	workerNum     = 7
 	myID          int
 	clientID      int
 	workerInfos   map[uint32]workerStepState

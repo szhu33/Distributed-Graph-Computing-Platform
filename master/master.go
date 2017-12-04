@@ -399,7 +399,7 @@ func startComputeGraph() {
 	for key, elem := range workerInfos {
 		fmt.Println("key", key, " value ", elem)
 	}
-
+	comT := time.Now()
 COMPUTE:
 	for !allVoteToHalt() {
 		// send standby master the stepcount
@@ -423,7 +423,7 @@ COMPUTE:
 				{
 					sendCount--
 					// update workerInfos
-					fmt.Printf("sendcount-- now is %d\n", sendCount)
+					// fmt.Printf("sendcount-- now is %d\n", sendCount)
 					if res.GetStepcount() == uint64(stepcount) {
 						workerInfos[res.GetSource()] = workerStepState{stepNum: int(res.GetStepcount()), state: res.GetCommand()}
 					}
@@ -448,6 +448,7 @@ COMPUTE:
 		stepcount++
 		fmt.Println("stepcount ++, now is", stepcount)
 	}
+	fmt.Println("computing time", time.Since(comT))
 	getAllResults()
 }
 
@@ -460,12 +461,14 @@ func main() {
 	}
 	for {
 		listenClient()
+		loadingT := time.Now()
 		app = clientRequest.GetApplication()
 		go listenWorker()
 		initialize()
 		if !isStandBy {
 			uploadState := uploadDataToSDFS()
-			fmt.Println("upload successfully:", uploadState)
+			fmt.Println("upload successfully? :", uploadState)
+			fmt.Println("loading time: ", time.Since(loadingT))
 			startComputeGraph()
 			sendClientRes()
 		} else {

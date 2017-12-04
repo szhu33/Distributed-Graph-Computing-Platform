@@ -67,17 +67,17 @@ func detectFailure() {
 		memberStatus := fd.MemberStatus()
 		for i := 0; i < len(memberStatus); i++ {
 			if !memberStatus[i] {
-				if i == clientID {
-					continue
-				} else if i == masterID {
-					isStandBy = false
-					fmt.Println("detected master failure!")
-					masterFailure <- true
-				} else if i == standbyID {
-					standbyFail = true
-					fmt.Println("standby master failed. Continue computing!")
-				} else {
-					if startComputeFlag {
+				if startComputeFlag {
+					if i == clientID {
+						continue
+					} else if i == masterID {
+						isStandBy = false
+						fmt.Println("detected master failure!")
+						masterFailure <- true
+					} else if i == standbyID {
+						standbyFail = true
+						fmt.Println("standby master failed. Continue computing!")
+					} else {
 						fmt.Println("worker failure, id is ", i)
 						workerFailure <- i
 					}

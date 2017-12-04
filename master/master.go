@@ -58,17 +58,14 @@ var (
 
 /* failre handling function */
 func detectFailure() {
-	fmt.Println("start detect failure!")
 	for !fd.GetIsInitialized() {
 		time.Sleep(time.Microsecond)
 		continue
 	}
 
 	for {
-		fmt.Println("enter detect loop again")
 		memberStatus := fd.MemberStatus()
 		for i := 0; i < len(memberStatus); i++ {
-			fmt.Println("enter memberStatus iteration, length", len(memberStatus), "i", i)
 			if !memberStatus[i] {
 				if i == clientID {
 					continue
@@ -87,9 +84,7 @@ func detectFailure() {
 				}
 			}
 		}
-		fmt.Println("start sleep")
 		time.Sleep(1 * time.Second)
-		fmt.Println("end sleep")
 	}
 }
 

@@ -69,6 +69,7 @@ func detectFailure() {
 					continue
 				} else if i == masterID {
 					isStandBy = false
+					fmt.Println("detected master failure!")
 					masterFailure <- true
 				} else if i == standbyID {
 					standbyFail = true

@@ -57,11 +57,14 @@ var (
 
 /* failre handling function */
 func detectFailure() {
+	fmt.Println("start detect failure!")
+	for !fd.GetIsInitialized() {
+		time.Sleep(time.Microsecond)
+		continue
+	}
+
 	for {
-		if !fd.GetIsInitialized() {
-			time.Sleep(time.Microsecond)
-			continue
-		}
+		fmt.Println("enter detect loop again")
 		memberStatus := fd.MemberStatus()
 		for i := 0; i < len(memberStatus); i++ {
 			if !memberStatus[i] {

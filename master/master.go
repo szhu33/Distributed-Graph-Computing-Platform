@@ -73,7 +73,8 @@ func detectFailure() {
 					} else if i == masterID {
 						isStandBy = false
 						fmt.Println("detected master failure!")
-						masterFailure <- true
+						isStandBy = false
+						standbyUp()
 					} else if i == standbyID {
 						standbyFail = true
 						fmt.Println("standby master failed. Continue computing!")
@@ -143,12 +144,6 @@ func standbyReivStepcount() {
 
 }
 
-func standbyWait() {
-	<-masterFailure
-	isStandBy = false
-	standbyUp()
-}
-
 func standbyUp() {
 	fmt.Println("enter standbyup!")
 	for standbyCount > 0 {
@@ -186,6 +181,7 @@ func standbyUp() {
 		stepcount++
 	}
 	getAllResults()
+	sendClientRes()
 }
 
 // upload dataset into sdfs TODO: implement this function
@@ -470,11 +466,9 @@ func main() {
 			uploadState := uploadDataToSDFS()
 			fmt.Println("upload successfully:", uploadState)
 			startComputeGraph()
+			sendClientRes()
 		} else {
-			go standbyReivStepcount()
-			standbyWait()
+			standbyReivStepcount()
 		}
-
-		sendClientRes()
 	}
 }

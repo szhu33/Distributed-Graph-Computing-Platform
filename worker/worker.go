@@ -355,7 +355,7 @@ func sendToMaster(cmd ssproto.Superstep_Command) {
 			return
 		}
 		defer conn1.Close()
-		conn.Write(pb)
+		conn1.Write(pb)
 	}
 }
 

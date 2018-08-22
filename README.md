@@ -16,7 +16,7 @@ We implemented two applications, PageRank and Single Source Shortest Path (SSSP)
 ### High performance
 It has better performance compared to GraphX from Apache.
 We run PageRank using graph with 334563 vertices and 925872 edges for 10 iterations, 20 iterations and 40 iterations.
-[img](./performance.png)
+![image](./performance.png)
 
 
 ## Design
